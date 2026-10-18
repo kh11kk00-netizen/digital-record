@@ -1,0 +1,5 @@
+{
+  "CFBundleDisplayName": "Dijital Kayıt",
+  "NSCameraUsageDescription": "Dijital Kayıt, faturaları çekmek için kamerayı kullanır.",
+  "NSPhotoLibraryUsageDescription": "Fotoğraf arşivinizden fatura görsellerini seçin."
+}

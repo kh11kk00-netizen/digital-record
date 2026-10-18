@@ -1,0 +1,5 @@
+{
+  "CFBundleDisplayName": "Registo Digital",
+  "NSCameraUsageDescription": "O Registo Digital usa a câmara para fotografar faturas.",
+  "NSPhotoLibraryUsageDescription": "Escolha imagens de faturas da sua fototeca."
+}

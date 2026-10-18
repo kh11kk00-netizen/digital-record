@@ -1,0 +1,5 @@
+{
+  "CFBundleDisplayName": "Digital Record",
+  "NSCameraUsageDescription": "Digital Record uses the camera to photograph invoices for your records.",
+  "NSPhotoLibraryUsageDescription": "Choose invoice images from your photo library to add them to your records."
+}
