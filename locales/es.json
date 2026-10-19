@@ -1,5 +1,10 @@
 {
-  "CFBundleDisplayName": "Registro digital",
-  "NSCameraUsageDescription": "Registro digital usa la cámara para fotografiar tus facturas.",
-  "NSPhotoLibraryUsageDescription": "Elige imágenes de facturas de tu fototeca."
+  "ios": {
+    "CFBundleDisplayName": "Registro digital",
+    "NSCameraUsageDescription": "Registro digital usa la cámara para capturar recibos.",
+    "NSPhotoLibraryUsageDescription": "Registro digital te permite seleccionar fotos de recibos."
+  },
+  "android": {
+    "app_name": "Registro digital"
+  }
 }
