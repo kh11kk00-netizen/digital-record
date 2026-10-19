@@ -4,9 +4,9 @@ import type { ExpoConfig } from "expo/config";
  * السجل الرقمي — DIGITAL RECORD
  * غيّر المعرّفين أدناه لمعرّف فريد تملكه قبل أول بناء (مثلاً com.yourname.digitalrecord).
  */
-const IOS_BUNDLE_ID = process.env.IOS_BUNDLE_ID ?? "com.digitalrecord.app";
-const ANDROID_PACKAGE = process.env.ANDROID_PACKAGE ?? "com.digitalrecord.app";
-const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID ?? "";
+const IOS_BUNDLE_ID = "com.kh11kk.digitalrecord";
+const ANDROID_PACKAGE = "com.kh11kk.digitalrecord";
+const EAS_PROJECT_ID = "12345678-abcd-1234-abcd-123456789abc"
 const EXPO_OWNER = process.env.EXPO_OWNER ?? undefined;
 
 const NAVY = "#102B4E";
