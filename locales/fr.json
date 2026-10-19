@@ -1,5 +1,10 @@
 {
-  "CFBundleDisplayName": "Dossier numérique",
-  "NSCameraUsageDescription": "Dossier numérique utilise l’appareil photo pour ajouter vos factures.",
-  "NSPhotoLibraryUsageDescription": "Choisissez des images de factures dans votre photothèque."
+  "ios": {
+    "CFBundleDisplayName": "Digitales Register",
+    "NSCameraUsageDescription": "Digitales Register verwendet die Kamera, um Belege zu erfassen.",
+    "NSPhotoLibraryUsageDescription": "Digitales Register ermöglicht die Auswahl von Belegfotos."
+  },
+  "android": {
+    "app_name": "Digitales Register"
+  }
 }
