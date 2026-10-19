@@ -1,5 +1,10 @@
 {
-  "CFBundleDisplayName": "السجل الرقمي",
-  "NSCameraUsageDescription": "يستخدم السجل الرقمي الكاميرا لتصوير الفواتير وإضافتها إلى سجلاتك.",
-  "NSPhotoLibraryUsageDescription": "يتيح السجل الرقمي اختيار صور الفواتير لإضافتها إلى سجلاتك."
+  "ios": {
+    "CFBundleDisplayName": "السجل الرقمي",
+    "NSCameraUsageDescription": "يستخدم السجل الرقمي الكاميرا لتصوير الفواتير وإضافتها إلى سجلاتك.",
+    "NSPhotoLibraryUsageDescription": "يتيح السجل الرقمي اختيار صور الفواتير لإضافتها إلى سجلاتك."
+  },
+  "android": {
+    "app_name": "السجل الرقمي"
+  }
 }
