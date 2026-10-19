@@ -1,5 +1,10 @@
 {
-  "CFBundleDisplayName": "Digital Record",
-  "NSCameraUsageDescription": "Digital Record uses the camera to photograph invoices for your records.",
-  "NSPhotoLibraryUsageDescription": "Choose invoice images from your photo library to add them to your records."
+  "ios": {
+    "CFBundleDisplayName": "Dossier numérique",
+    "NSCameraUsageDescription": "Dossier numérique utilise l'appareil photo pour capturer des reçus.",
+    "NSPhotoLibraryUsageDescription": "Dossier numérique vous permet de sélectionner des photos de reçus."
+  },
+  "android": {
+    "app_name": "Dossier numérique"
+  }
 }
