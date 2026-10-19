@@ -6,7 +6,7 @@ import type { ExpoConfig } from "expo/config";
  */
 const IOS_BUNDLE_ID = "com.kh11kk.digitalrecord";
 const ANDROID_PACKAGE = "com.kh11kk.digitalrecord";
-const EAS_PROJECT_ID = "12345678-abcd-1234-abcd-123456789abc"
+const EAS_PROJECT_ID = "63c38093-fadf-45e6-bb05-f7bc5c2b1b94";
 const EXPO_OWNER = process.env.EXPO_OWNER ?? undefined;
 
 const NAVY = "#102B4E";
