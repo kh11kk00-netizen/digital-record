@@ -1,5 +1,10 @@
 {
-  "CFBundleDisplayName": "Registo Digital",
-  "NSCameraUsageDescription": "O Registo Digital usa a câmara para fotografar faturas.",
-  "NSPhotoLibraryUsageDescription": "Escolha imagens de faturas da sua fototeca."
+  "ios": {
+    "CFBundleDisplayName": "Dijital Kayıt",
+    "NSCameraUsageDescription": "Dijital Kayıt, fişleri çekmek için kamerayı kullanır.",
+    "NSPhotoLibraryUsageDescription": "Dijital Kayıt, kayıtlarınıza eklemek için fiş fotoğrafları seçmenize olanak tanır."
+  },
+  "android": {
+    "app_name": "Dijital Kayıt"
+  }
 }
