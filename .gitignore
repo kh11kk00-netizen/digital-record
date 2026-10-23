@@ -19,3 +19,5 @@ npm-debug.*
 yarn-error.*
 .DS_Store
 *.tsbuildinfo
+
+server-data/

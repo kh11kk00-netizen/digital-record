@@ -4,6 +4,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { I18nManager, Platform } from "react-native";
 import ar from "./locales/ar";
+import { readerMessages } from "./reader";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
@@ -51,7 +52,7 @@ export function deviceCurrency(): string {
 }
 
 void i18n.use(initReactI18next).init({
-  resources: { ar: { t: ar }, en: { t: en }, fr: { t: fr }, es: { t: es }, de: { t: de }, pt: { t: pt }, tr: { t: tr } },
+  resources: { ar: { t: { ...ar, reader: readerMessages.ar } }, en: { t: { ...en, reader: readerMessages.en } }, fr: { t: fr }, es: { t: es }, de: { t: de }, pt: { t: pt }, tr: { t: tr } },
   ns: ["t"],
   defaultNS: "t",
   lng: deviceLanguage(),

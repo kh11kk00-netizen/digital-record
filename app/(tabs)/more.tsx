@@ -184,11 +184,12 @@ export default function More() {
       </Card>
 
       <SectionHeader title={t("settings.privacyTitle")} />
+      <SettingRow icon="lock" label={t("reader.privacy")} onPress={() => router.push("/privacy")} />
       <Card style={{ gap: space.sm }}>
         <Row gap={space.sm}>
           <Feather name="lock" size={18} color={colors.success} />
           <Txt variant="small" style={{ flex: 1 }}>
-            {t("settings.privacyBody")}
+            {t("reader.policy")}
           </Txt>
         </Row>
       </Card>

@@ -1,22 +1,10 @@
-# سياسة الخصوصية — السجل الرقمي (DIGITAL RECORD)
-آخر تحديث: 2026
+# Privacy policy — private pilot / سياسة التجربة الخاصة
+Updated: 2026-10-23
 
-**بالعربية**
-- لا نجمع أي بيانات شخصية. لا حسابات، لا خوادم، لا إعلانات، ولا أدوات تتبّع.
-- السجلات وصور الفواتير والملاحظات تُحفظ داخل التطبيق على جهازك فقط.
-- الكاميرا ومكتبة الصور تُستخدمان فقط عند اختيارك تصوير فاتورة أو إرفاق صورة.
-- الإشعارات مجدولة محليًا على جهازك ولا تمر بأي خادم.
-- النسخة الاحتياطية ملف تنشئه أنت وتشاركه بنفسك؛ لا تتضمن الصور.
-- حذف التطبيق أو استخدام «حذف كل السجلات» يزيل البيانات من الجهاز.
-- للتواصل: [بريدك الإلكتروني]
+السجلات والصور والتذكيرات محلية. النسخ الاحتياطية التي يصدّرها المستخدم لا تشمل الصور. القراءة اختيارية: بعد الإفصاح وضغط زر القراءة تُرسل الصورة المختارة عبر خادم القراءة إلى Google Gemini. لا يحفظ خادم القراءة الصور أو النصوص؛ يحفظ عدد الطلبات اليومي فقط. تبقى رموز التجربة في ذاكرة الشاشة فقط. قد يعالج مزود الاستضافة وGoogle بيانات تقنية وفق سياساتهما. استخدم فواتير وهمية فقط في التجربة المجانية؛ قد تستخدم Google المحتوى لتحسين منتجاتها. راجع النتائج قبل الحفظ، ويمكن حذف السجلات أو إعادة ضبط التطبيق لحذف بياناته المحلية.
 
-**English**
-- We collect no personal data. No accounts, servers, ads or trackers.
-- Records, invoice images and notes are stored only inside the app on your device.
-- Camera and photo library are used only when you choose to capture or attach an invoice.
-- Notifications are scheduled locally on your device.
-- Backups are files you create and share yourself; they exclude images.
-- Deleting the app or using “Delete all records” removes the data from your device.
-- Contact: [your email]
+Records, images and reminders are local. User-exported backups exclude images. Reading is optional: the selected image is sent through the reader to Google Gemini after disclosure and pressing Read. The reader stores daily counts, not image/text content. Private access codes remain in screen memory. Hosting and Google may process technical metadata under their policies. Use fictional receipts in this free-tier pilot; Google may use content to improve products. Review AI results before saving. Delete records or reset the app to delete local app data.
 
-> App Store «App Privacy»: اختر **Data Not Collected**. Google Play «Data safety»: **No data collected / No data shared**.
+Google processing terms: https://ai.google.dev/gemini-api/terms
+
+Not ready as a public-store policy: owner contact details and a hosted public URL must be supplied and actual store disclosures reviewed. Do not automatically select Data Not Collected / No Data Shared.

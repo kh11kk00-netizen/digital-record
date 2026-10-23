@@ -2,13 +2,14 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { Button, Chip, Field, Header, Row, Txt } from "@/components/ui";
 import { deviceCurrency } from "@/i18n";
-import { coerceDateInput, normalizeDigits, todayIso } from "@/lib/dates";
+import { coerceDateInput, normalizeDigits } from "@/lib/dates";
+import { readerUrl, readInvoice, type Extraction } from "@/lib/invoice-reader";
 import { persistImage } from "@/lib/files";
 import { formatDays, formatMonths } from "@/lib/format";
 import { ensurePermission } from "@/lib/notifications";
@@ -37,6 +38,13 @@ const s = (v: string | number | null | undefined) => (v === null || v === undefi
 
 export default function NewRecord() {
   const { t } = useTranslation();
+  const abort = useRef<AbortController | null>(null);
+  useEffect(() => () => abort.current?.abort(), []);
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [accessCode, setAccessCode] = useState("");
+  const [reading, setReading] = useState(false);
+  const [extracted, setExtracted] = useState<Extraction | null>(null);
+  const [readError, setReadError] = useState("");
   const router = useRouter();
   const params = useLocalSearchParams<{ type?: string; id?: string; title?: string }>();
   const { getRecord, addRecord, updateRecord } = useRecords();
@@ -49,7 +57,7 @@ export default function NewRecord() {
     title: existing?.title ?? s(params.title),
     brand: s(existing?.brand),
     merchant: s(existing?.merchant),
-    purchaseDate: s(existing?.purchaseDate) || (purchaseLike && !existing ? todayIso() : ""),
+    purchaseDate: s(existing?.purchaseDate),
     price: s(existing?.price),
     currency: existing?.currency ?? deviceCurrency(),
     invoiceNumber: s(existing?.invoiceNumber),
@@ -73,13 +81,43 @@ export default function NewRecord() {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) return Alert.alert(t("form.cameraDenied"));
       }
-      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], quality: 0.7, allowsEditing: false };
+      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], quality: 0.7, allowsEditing: false, base64: !!readerUrl };
       const res = source === "camera" ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
-      if (!res.canceled && res.assets[0]) setForm((f) => ({ ...f, imageUri: res.assets[0].uri }));
+      if (!res.canceled && res.assets[0]) {
+        abort.current?.abort();
+        setExtracted(null); setReadError("");
+        setImageData(res.assets[0].base64 ?? null);
+        setForm((f) => ({ ...f, imageUri: res.assets[0].uri }));
+      }
     } catch {
       Alert.alert(t("common.error"), t("form.imageFailed"));
     }
   };
+
+  const scan = async () => {
+    if (!imageData || reading) return;
+    const controller = new AbortController();
+    abort.current = controller;
+    setReading(true); setReadError(""); setExtracted(null);
+    const timer = setTimeout(() => controller.abort(), 75000);
+    try {
+      const result = await readInvoice(imageData, accessCode, controller.signal);
+      if (!controller.signal.aborted) setExtracted(result);
+    } catch (error) {
+      if (abort.current === controller) {
+        const code = error instanceof Error ? error.message : "";
+        const message = code === "UNAUTHORIZED" ? "unauthorized" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
+        setReadError(t(`reader.${message}`));
+      }
+    } finally {
+      clearTimeout(timer);
+      if (abort.current === controller) { setReading(false); abort.current = null; }
+    }
+  };
+  const cancelReading = () => { const controller = abort.current; abort.current = null; controller?.abort(); setReading(false); };
+  const usableEntries = extracted ? Object.entries(extracted).filter(([key]) =>
+    key === "title" || key === "detail" || (purchaseLike && !["dueDate"].includes(key)) || (dueLike && ["dueDate", "price", "currency", "merchant", "invoiceNumber"].includes(key))
+  ) : [];
 
   const int = (v: string) => {
     const n = parseInt(normalizeDigits(v), 10);
@@ -87,6 +125,7 @@ export default function NewRecord() {
   };
 
   const save = async () => {
+    if (reading || extracted) return;
     const e: Partial<Record<keyof Form, string>> = {};
     if (!form.title.trim()) e.title = t("form.errRequired");
     const dateOrNull = (k: "purchaseDate" | "warrantyEndsOn" | "dueDate") => {
@@ -155,8 +194,8 @@ export default function NewRecord() {
             <View style={{ marginBottom: space.lg }}>
               <Image source={{ uri: form.imageUri }} style={{ width: "100%", height: 200, borderRadius: radius.lg, backgroundColor: colors.neutralSoft }} resizeMode="cover" />
               <Row gap={space.sm} style={{ marginTop: space.sm }}>
-                <Button label={t("form.retake")} variant="light" icon="camera" onPress={() => void pick("camera")} style={{ flex: 1 }} />
-                <Button label={t("form.removeImage")} variant="danger" icon="trash-2" onPress={() => setForm((f) => ({ ...f, imageUri: null }))} style={{ flex: 1 }} />
+                <Button label={t("form.retake")} variant="light" icon="camera" disabled={reading} onPress={() => void pick("camera")} style={{ flex: 1 }} />
+                <Button label={t("form.removeImage")} variant="danger" icon="trash-2" disabled={reading} onPress={() => { cancelReading(); setImageData(null); setExtracted(null); setReadError(""); setForm((f) => ({ ...f, imageUri: null })); }} style={{ flex: 1 }} />
               </Row>
             </View>
           ) : (
@@ -174,6 +213,25 @@ export default function NewRecord() {
               </Pressable>
             </Pressable>
           )}
+
+          <View style={{ marginBottom: space.lg, gap: space.sm }}>
+            <Txt variant="h3">{t("reader.title")}</Txt>
+            {readerUrl ? <>
+              <Txt variant="small">{t("reader.consent")}</Txt>
+              <Field label={t("reader.token")} hint={t("reader.tokenHint")} value={accessCode} onChangeText={setAccessCode} secureTextEntry autoCapitalize="none" autoCorrect={false} editable={!reading} />
+              <Button label={t("reader.read")} loading={reading} disabled={!imageData || !accessCode.trim() || !!extracted} onPress={() => void scan()} />
+              {reading ? <Button label={t("reader.cancelled")} variant="light" onPress={cancelReading} /> : null}
+              {readError ? <Txt variant="small">{readError}</Txt> : null}
+              {extracted ? <View style={{ gap: space.sm }}>
+                <Txt variant="h3">{t("reader.review")}</Txt>
+                <Txt variant="small">{t("reader.reviewHint")}</Txt>
+                {usableEntries.map(([key, value]) => <Txt key={key} variant="small">{(key === "title" ? t(`form.nameLabel.${dueLike ? "due" : "item"}`) : t(`fields.${key}`))}: {value}</Txt>)}
+                <Button label={t("reader.apply")} disabled={!usableEntries.length} onPress={() => { setForm((f) => ({ ...f, ...Object.fromEntries(usableEntries) })); setExtracted(null); setErrors({}); }} />
+                <Button label={t("reader.discard")} variant="light" onPress={() => setExtracted(null)} />
+              </View> : null}
+            </> : <Txt variant="small">{t("reader.unavailable")}</Txt>}
+            <Button label={t("reader.privacy")} variant="ghost" onPress={() => router.push("/privacy")} />
+          </View>
 
           <Field label={t(`form.nameLabel.${dueLike ? "due" : "item"}`)} placeholder={t(`form.namePh.${type}`)} value={form.title} onChangeText={set("title")} error={errors.title} />
 
@@ -245,7 +303,7 @@ export default function NewRecord() {
             <Field label={t("fields.detail")} placeholder={t("form.notePh")} value={form.detail} onChangeText={set("detail")} multiline />
           )}
 
-          <Button label={existing ? t("common.saveChanges") : t("common.save")} variant="navy" icon="check" loading={saving} onPress={() => void save()} style={{ marginTop: space.sm }} />
+          <Button label={existing ? t("common.saveChanges") : t("common.save")} variant="navy" icon="check" disabled={reading || !!extracted} loading={saving} onPress={() => void save()} style={{ marginTop: space.sm }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

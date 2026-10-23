@@ -14,7 +14,9 @@
     "build:android": "eas build --platform android --profile production",
     "build:ios": "eas build --platform ios --profile production",
     "build:all": "eas build --platform all --profile production",
-    "submit:all": "eas submit --platform all --profile production --latest"
+    "submit:all": "eas submit --platform all --profile production --latest",
+    "reader:start": "node server/index.mjs",
+    "reader:test": "node --test server/reader.test.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
