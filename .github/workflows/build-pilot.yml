@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-package-lock
+      - run: npm install
       - run: npm run typecheck
       - run: npm run reader:test
 
@@ -50,7 +50,7 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-      - run: npm install --no-package-lock
+      - run: npm install
       - name: Build signed store binary
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
