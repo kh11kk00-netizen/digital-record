@@ -1,4 +1,3 @@
-import {randomBytes} from 'node:crypto';
 import {resolve} from 'node:path';
 import {homedir} from 'node:os';
 import {createReader} from './index.mjs';
@@ -7,7 +6,11 @@ if (!process.env.GEMINI_API_KEY?.trim()) {
   console.error('GEMINI_API_KEY is missing. Run this in the original terminal where you entered the key.');
   process.exit(1);
 }
-const token=process.env.OCR_ACCESS_TOKEN?.trim() || randomBytes(24).toString('hex');
+const token=process.env.OCR_ACCESS_TOKEN?.trim();
+if (!token || token.length < 24) {
+  console.error('OCR_ACCESS_TOKEN must be set to a stable private access code of at least 24 characters.');
+  process.exit(1);
+}
 const server=createReader({
   key:process.env.GEMINI_API_KEY.trim(), token,
   usagePath:resolve(homedir(),'.digital-record-reader','usage.json'),

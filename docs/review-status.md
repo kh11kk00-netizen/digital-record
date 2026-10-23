@@ -35,3 +35,25 @@ This checklist distinguishes code fixes from external release requirements. Succ
 - https://docs.expo.dev/versions/latest/sdk/imagepicker/
 - https://docs.expo.dev/versions/latest/sdk/imagemanipulator/
 - https://ai.google.dev/gemini-api/terms
+
+
+## Scoped follow-up to ad081f5 — 2026-10-24
+
+Only the ten requested items were changed. No branch merge or EAS build was requested or run for these fixes.
+
+| Item | Status and evidence |
+| --- | --- |
+| 1 | Removed the URL from eas.json. pilot extends base and uses EAS preview environment; production uses production. Set EXPO_PUBLIC_OCR_URL only in preview after durable hosting is ready. build-pilot is manual-only and uses --profile pilot, preventing a build on this push. |
+| 2 | One visible-field allow-list filters extraction by record type. Document permits only title, detail, dueDate and invoiceNumber. tests/review-fixes.test.mjs covers hidden financial fields. |
+| 3 | normalizeDigits no longer changes commas. parseAmount handles explicit grouping/decimal formats and rejects malformed input. Save uses it and form.errNumber. Required examples and ambiguous cases are tested. |
+| 4 | coerceDateInput accepts only 1900–2200; Hijri-looking years 1300–1500 receive form.errHijri in all seven languages. Boundary, invalid and Arabic-digit dates are tested. |
+| 5 | Review displays current ← extracted value with a switch per field. Only fields empty at scan start are selected by default. Apply uses selected fields and retains the snapshot race guard. Existing values, opt-in, opt-out and intervening edits are tested. |
+| 6 | Reader strings, including consent, translated into all seven languages and registered. Settings uses privacyBody and translated terms. |
+| 7 | Non-JSON, malformed JSON, 404 and 5xx responses raise SERVER_UNAVAILABLE before field processing. Seven translations explain that manual entry remains available. API error and hosting error paths are tested. |
+| 8 | App and setup documentation point to https://kh11kk00-netizen.github.io/digital-record/privacy.html. Independent site/ contains privacy and terms in Arabic/English. A separate Pages-only workflow publishes site/ from main; no app code is merged into main. Publication status is recorded below after the deployment attempt. |
+| 9 | pilot refuses missing/short OCR_ACCESS_TOKEN; no random fallback. Regression checks both cases. |
+| 10 | Direct execution compares fileURLToPath(import.meta.url) with resolve(process.argv[1]), guarded for imports. Regression launches from a relative path in a directory containing spaces and Arabic characters. |
+
+Validation: npm run typecheck passed. npm run test:regressions passed (14 tests, 0 failures). Tests use mocked provider responses and local HTTP; no EAS build or real invoice submission was performed.
+
+Pages deployment: site/ and the Pages-only workflow were committed directly to main in 141719f3f99e65bb0884b49daa2a01be2461dafa (no branch merge). Run 40036253360 failed at configure-pages because Pages is not enabled (404). The configured Pages URL is not live yet. The connected GitHub tools cannot administer Pages settings. Owner action: repository Settings → Pages → Build and deployment → Source: GitHub Actions; then rerun the failed Pages job. This publishes only site/, never runs EAS, and requires no Expo/provider token.

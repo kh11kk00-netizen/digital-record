@@ -73,7 +73,23 @@ export function normalizeDigits(value: string): string {
   return value
     .replace(/[\u0660-\u0669]/g, (c) => String(c.charCodeAt(0) - 0x0660))
     .replace(/[\u06F0-\u06F9]/g, (c) => String(c.charCodeAt(0) - 0x06f0))
-    .replace(/[٫,]/g, ".");
+    .replace(/٫/g, ".");
+}
+
+/** Parse supported decimal/grouping forms; never guess malformed grouping. */
+export function parseAmount(raw: string): number | null {
+  let value = normalizeDigits(raw.trim());
+  if (/^\d{1,3}(?:٬\d{3})+(?:\.\d+)?$/.test(value)) value = value.replace(/٬/g, "");
+  else if (/^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(value)) value = value.replace(/,/g, "");
+  else if (/^\d+,\d{2}$/.test(value)) value = value.replace(",", ".");
+  else if (!/^\d+(?:\.\d+)?$/.test(value)) return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+export function looksHijri(raw: string): boolean {
+  const year = Number(normalizeDigits(raw.trim()).match(/^(\d{4})[-./]/)?.[1]);
+  return year >= 1300 && year <= 1500;
 }
 
 /** Accepts 2025-4-2, 2025/04/02, ٢٠٢٥-٠٤-٠٢ and returns a valid YYYY-MM-DD or null. */
@@ -81,6 +97,7 @@ export function coerceDateInput(raw: string): string | null {
   const v = normalizeDigits(raw.trim()).replace(/[./]/g, "-");
   const m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (!m) return null;
+  if (Number(m[1]) < 1900 || Number(m[1]) > 2200) return null;
   const iso = `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
   return isValidIsoDate(iso) ? iso : null;
 }

@@ -4,13 +4,13 @@ import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
+import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { Button, Chip, Field, Header, Row, Txt } from "@/components/ui";
 import { deviceCurrency } from "@/i18n";
-import { coerceDateInput, normalizeDigits } from "@/lib/dates";
-import { mergeReviewedExtraction, readerUrl, readInvoice, type Extraction } from "@/lib/invoice-reader";
+import { coerceDateInput, looksHijri, normalizeDigits, parseAmount } from "@/lib/dates";
+import { defaultExtractionSelection, usableExtraction, mergeReviewedExtraction, readerUrl, readInvoice, type Extraction } from "@/lib/invoice-reader";
 import { deleteCachedImage, persistImage } from "@/lib/files";
 import { formatDays, formatMonths } from "@/lib/format";
 import { ensurePermission } from "@/lib/notifications";
@@ -52,6 +52,7 @@ export default function NewRecord() {
   const [reading, setReading] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [extracted, setExtracted] = useState<Extraction | null>(null);
+  const [selectedFields, setSelectedFields] = useState<Extraction>({});
   const [readError, setReadError] = useState("");
   const router = useRouter();
   const params = useLocalSearchParams<{ type?: string; id?: string; title?: string }>();
@@ -135,11 +136,15 @@ export default function NewRecord() {
     const timer = setTimeout(() => controller.abort(), 75000);
     try {
       const result = await readInvoice(imageData, accessCode, controller.signal);
-      if (mounted.current && abort.current === controller && !controller.signal.aborted) setExtracted(result);
+      if (mounted.current && abort.current === controller && !controller.signal.aborted) {
+        const fields = usableExtraction(type, result);
+        setSelectedFields(defaultExtractionSelection(scanSnapshot.current!, fields));
+        setExtracted(fields);
+      }
     } catch (error) {
       if (mounted.current && abort.current === controller) {
         const code = error instanceof Error ? error.message : "";
-        const message = code === "UNAUTHORIZED" ? "unauthorized" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
+        const message = code === "SERVER_UNAVAILABLE" ? "serverUnavailable" : code === "UNAUTHORIZED" ? "unauthorized" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
         setReadError(t(`reader.${message}`));
       }
     } finally {
@@ -152,9 +157,7 @@ export default function NewRecord() {
     { text: t("common.cancel"), style: "cancel" },
     { text: t("reader.agree"), onPress: () => void scan() },
   ]);
-  const usableEntries = extracted ? Object.entries(extracted).filter(([key]) =>
-    key === "title" || key === "detail" || (purchaseLike && !["dueDate"].includes(key)) || (dueLike && ["dueDate", "price", "currency", "merchant", "invoiceNumber"].includes(key))
-  ) : [];
+  const usableEntries = Object.entries(usableExtraction(type, extracted ?? {})) as [keyof Extraction, string][];
 
   const int = (v: string) => {
     const n = parseInt(normalizeDigits(v), 10);
@@ -168,7 +171,7 @@ export default function NewRecord() {
     const dateOrNull = (k: "purchaseDate" | "warrantyEndsOn" | "dueDate") => {
       if (!form[k].trim()) return null;
       const d = coerceDateInput(form[k]);
-      if (!d) e[k] = t("form.errDate");
+      if (!d) e[k] = t(looksHijri(form[k]) ? "form.errHijri" : "form.errDate");
       return d;
     };
     const purchaseDate = dateOrNull("purchaseDate");
@@ -176,8 +179,8 @@ export default function NewRecord() {
     const dueDate = dateOrNull("dueDate");
     let price: number | null = null;
     if (form.price.trim()) {
-      price = Number(normalizeDigits(form.price.replace(/\s/g, "")));
-      if (!Number.isFinite(price) || price < 0) e.price = t("form.errNumber");
+      price = parseAmount(form.price);
+      if (price === null) e.price = t("form.errNumber");
     }
     const currency = form.currency.trim().toUpperCase();
     if (currency && !/^[A-Z]{3}$/.test(currency)) e.currency = t("form.errCurrency");
@@ -269,10 +272,18 @@ export default function NewRecord() {
               {extracted ? <View style={{ gap: space.sm }}>
                 <Txt variant="h3">{t("reader.review")}</Txt>
                 <Txt variant="small">{t("reader.reviewHint")}</Txt>
-                {usableEntries.map(([key, value]) => <Txt key={key} variant="small">{(key === "title" ? t(`form.nameLabel.${dueLike ? "due" : "item"}`) : t(`fields.${key}`))}: {value}</Txt>)}
-                <Button label={t("reader.apply")} disabled={!usableEntries.length} onPress={() => {
+                {usableEntries.map(([key, value]) => <Row key={key} gap={space.sm}>
+                  <View style={{ flex: 1 }}>
+                    <Txt variant="small">{key === "title" ? t(`form.nameLabel.${dueLike ? "due" : "item"}`) : t(`fields.${key}`)}</Txt>
+                    <Txt variant="small">{form[key] || "—"} ← {value}</Txt>
+                  </View>
+                  <Switch accessibilityLabel={t("reader.selectField", { field: key === "title" ? t(`form.nameLabel.${dueLike ? "due" : "item"}`) : t(`fields.${key}`) })} value={selectedFields[key] !== undefined} onValueChange={(checked) => setSelectedFields((previous) => {
+                    const next = { ...previous }; if (checked) next[key] = value; else delete next[key]; return next;
+                  })} />
+                </Row>)}
+                <Button label={t("reader.apply")} disabled={!Object.keys(selectedFields).length} onPress={() => {
                   const snapshot = scanSnapshot.current;
-                  setForm((f) => mergeReviewedExtraction(f, snapshot, Object.fromEntries(usableEntries)));
+                  setForm((f) => mergeReviewedExtraction(f, snapshot, usableExtraction(type, selectedFields)));
                   setExtracted(null); setErrors({});
                 }} />
                 <Button label={t("reader.discard")} variant="light" onPress={() => setExtracted(null)} />

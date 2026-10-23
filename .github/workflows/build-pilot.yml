@@ -1,9 +1,6 @@
 name: Build iOS and Android pilot
 
 on:
-  push:
-    branches: [codex/invoice-reader-pilot]
-    paths: [.github/workflows/build-pilot.yml]
   workflow_dispatch:
 
 permissions:
@@ -55,7 +52,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           BUILD_PLATFORM: ${{ matrix.platform }}
-        run: eas build --platform "$BUILD_PLATFORM" --profile production --non-interactive --wait --json > build-result.json
+        run: eas build --platform "$BUILD_PLATFORM" --profile pilot --non-interactive --wait --json > build-result.json
       - name: Save build result
         if: always()
         uses: actions/upload-artifact@v4

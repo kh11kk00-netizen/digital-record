@@ -2,6 +2,7 @@ import {createServer} from 'node:http';
 import {timingSafeEqual} from 'node:crypto';
 import {mkdirSync, readFileSync, writeFileSync, renameSync} from 'node:fs';
 import {resolve, dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {schema, cleanExtraction, validateImage} from './extraction.mjs';
 
 // Private single-instance pilot: no image, key or provider response logging.
@@ -59,7 +60,7 @@ export function createReader({key, token, usagePath, dailyLimit=20, fetcher=fetc
     finally {busy=false;}
   });
 }
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   const server=createReader({key:process.env.GEMINI_API_KEY,token:process.env.OCR_ACCESS_TOKEN,usagePath:resolve(process.env.OCR_USAGE_FILE??'server-data/usage.json'),dailyLimit:Number(process.env.OCR_DAILY_LIMIT??20)});
   server.requestTimeout=30000;
   server.listen(Number(process.env.PORT??8787),process.env.HOST??'127.0.0.1',()=>console.log('Invoice reader ready'));

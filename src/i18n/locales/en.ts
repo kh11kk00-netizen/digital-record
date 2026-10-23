@@ -165,7 +165,7 @@ const en = {
     },
     notePh: "Write a note…",
     errRequired: "This field is required",
-    errDate: "Enter a valid date (YYYY-MM-DD)",
+    errHijri: "This date appears to be Hijri. Enter a Gregorian date.", errDate: "Enter a valid date (YYYY-MM-DD)",
     errNumber: "Enter a valid number",
     errCurrency: "Use a 3-letter code like SAR, USD, EUR",
   },
@@ -319,7 +319,7 @@ const en = {
       other: "Everything else",
     },
   },
-  settings: {
+  settings: { terms: "Terms of use",
     title: "Settings",
     language: "Language",
     backup: "Export backup",

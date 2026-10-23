@@ -167,7 +167,7 @@ const ar: Translation = {
     },
     notePh: "اكتب ملاحظة…",
     errRequired: "هذا الحقل مطلوب",
-    errDate: "أدخل تاريخًا صحيحًا (سنة-شهر-يوم)",
+    errHijri: "يبدو التاريخ هجريًا. أدخله بالتقويم الميلادي.", errDate: "أدخل تاريخًا صحيحًا (سنة-شهر-يوم)",
     errNumber: "أدخل رقمًا صحيحًا",
     errCurrency: "استخدم رمزًا من 3 أحرف مثل SAR أو AED أو USD",
   },
@@ -321,7 +321,7 @@ const ar: Translation = {
       other: "كل ما يهمك",
     },
   },
-  settings: {
+  settings: { terms: "شروط الاستخدام",
     title: "الإعدادات",
     language: "اللغة",
     backup: "تصدير نسخة احتياطية",

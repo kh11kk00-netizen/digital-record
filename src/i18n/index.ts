@@ -52,7 +52,7 @@ export function deviceCurrency(): string {
 }
 
 void i18n.use(initReactI18next).init({
-  resources: { ar: { t: { ...ar, reader: readerMessages.ar } }, en: { t: { ...en, reader: readerMessages.en } }, fr: { t: fr }, es: { t: es }, de: { t: de }, pt: { t: pt }, tr: { t: tr } },
+  resources: { ar: { t: { ...ar, reader: readerMessages.ar } }, en: { t: { ...en, reader: readerMessages.en } }, fr: { t: { ...fr, reader: readerMessages.fr } }, es: { t: { ...es, reader: readerMessages.es } }, de: { t: { ...de, reader: readerMessages.de } }, pt: { t: { ...pt, reader: readerMessages.pt } }, tr: { t: { ...tr, reader: readerMessages.tr } } },
   ns: ["t"],
   defaultNS: "t",
   lng: deviceLanguage(),

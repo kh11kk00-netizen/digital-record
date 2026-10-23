@@ -37,8 +37,18 @@
       "ios": {
         "resourceClass": "medium"
       },
-      "env": {
-        "EXPO_PUBLIC_OCR_URL": "https://bookish-doodle-r76x7vqr9rq43wjqv-8787.app.github.dev"
+      "environment": "production"
+    },
+    "pilot": {
+      "extends": "base",
+      "environment": "preview",
+      "distribution": "store",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "resourceClass": "medium"
       }
     }
   },
