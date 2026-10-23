@@ -10,6 +10,12 @@ test('unknown fields, impossible dates and invented numeric formats are rejected
   assert.deepEqual(cleanExtraction({title:' Phone ',purchaseDate:'2026-02-30',warrantyMonths:'two',price:'1,000',currency:'SAR',extra:'secret'}),{title:'Phone',currency:'SAR'});
   assert.deepEqual(cleanExtraction({purchaseDate:'2026-02-28',warrantyMonths:null,price:'100.50'}),{purchaseDate:'2026-02-28',price:'100.50'});
 });
+test('Arabic and Persian numerals are normalized; Hijri years are not mislabelled Gregorian',()=>{
+  assert.deepEqual(cleanExtraction({purchaseDate:'٢٠٢٦-١٠-٢٤',price:'١٢٣٫٥٠',warrantyMonths:'۲۴'}),
+    {purchaseDate:'2026-10-24',price:'123.50',warrantyMonths:'24'});
+  assert.deepEqual(cleanExtraction({purchaseDate:'1448-04-10',price:'1,000'}),{});
+  assert.throws(()=>cleanExtraction({title:{unexpected:'object'}}),/INVALID_RESULT/);
+});
 test('private reader authenticates, forwards image, sanitizes output and persists daily cap', async()=>{
   const dir=mkdtempSync(join(tmpdir(),'reader-test-'));
   const token='private-test-code-1234567890';

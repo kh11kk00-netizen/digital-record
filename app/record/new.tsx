@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
@@ -9,8 +10,8 @@ import { useTranslation } from "react-i18next";
 import { Button, Chip, Field, Header, Row, Txt } from "@/components/ui";
 import { deviceCurrency } from "@/i18n";
 import { coerceDateInput, normalizeDigits } from "@/lib/dates";
-import { readerUrl, readInvoice, type Extraction } from "@/lib/invoice-reader";
-import { persistImage } from "@/lib/files";
+import { mergeReviewedExtraction, readerUrl, readInvoice, type Extraction } from "@/lib/invoice-reader";
+import { deleteCachedImage, persistImage } from "@/lib/files";
 import { formatDays, formatMonths } from "@/lib/format";
 import { ensurePermission } from "@/lib/notifications";
 import { DUE_LIKE, PURCHASE_LIKE, RECORD_TYPES, type RecordDraft, type RecordType } from "@/lib/types";
@@ -39,10 +40,17 @@ const s = (v: string | number | null | undefined) => (v === null || v === undefi
 export default function NewRecord() {
   const { t } = useTranslation();
   const abort = useRef<AbortController | null>(null);
-  useEffect(() => () => abort.current?.abort(), []);
+  const selectedCache = useRef<string | null>(null);
+  const scanSnapshot = useRef<Form | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; abort.current?.abort(); deleteCachedImage(selectedCache.current); };
+  }, []);
   const [imageData, setImageData] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState("");
   const [reading, setReading] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [extracted, setExtracted] = useState<Extraction | null>(null);
   const [readError, setReadError] = useState("");
   const router = useRouter();
@@ -76,45 +84,74 @@ export default function NewRecord() {
   const title = existing ? t("form.editTitle") : t(`form.titles.${type}`);
 
   const pick = async (source: "camera" | "library") => {
+    if (reading || preparing) return;
+    setPreparing(true);
+    let pickedUri: string | null = null;
+    let preparedUri: string | null = null;
     try {
       if (source === "camera") {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) return Alert.alert(t("form.cameraDenied"));
       }
-      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], quality: 0.7, allowsEditing: false, base64: !!readerUrl };
+      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], quality: 0.9, allowsEditing: false, base64: false, exif: false };
       const res = source === "camera" ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
       if (!res.canceled && res.assets[0]) {
+        const asset = res.assets[0];
+        pickedUri = asset.uri;
+        const context = ImageManipulator.manipulate(asset.uri);
+        let rendered;
+        let photo;
+        try {
+          if (Math.max(asset.width, asset.height) > 2400) context.resize(asset.width >= asset.height ? { width: 2400 } : { height: 2400 });
+          rendered = await context.renderAsync();
+          photo = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.8, base64: !!readerUrl });
+        } finally { rendered?.release(); context.release(); }
+        preparedUri = photo.uri;
+        if (photo.base64 && photo.base64.length > 8_000_000) throw Error("IMAGE_TOO_LARGE");
+        if (!mounted.current) return;
         abort.current?.abort();
+        deleteCachedImage(selectedCache.current);
+        selectedCache.current = photo.uri;
+        scanSnapshot.current = null;
         setExtracted(null); setReadError("");
-        setImageData(res.assets[0].base64 ?? null);
-        setForm((f) => ({ ...f, imageUri: res.assets[0].uri }));
+        setImageData(photo.base64 ?? null);
+        setForm((f) => ({ ...f, imageUri: photo.uri }));
+        preparedUri = null;
       }
-    } catch {
-      Alert.alert(t("common.error"), t("form.imageFailed"));
+    } catch (error) {
+      if (mounted.current) Alert.alert(t("common.error"), t(error instanceof Error && error.message === "IMAGE_TOO_LARGE" ? "reader.tooLarge" : "form.imageFailed"));
+    } finally {
+      deleteCachedImage(pickedUri); deleteCachedImage(preparedUri);
+      if (mounted.current) setPreparing(false);
     }
   };
 
   const scan = async () => {
-    if (!imageData || reading) return;
+    if (!imageData || reading || preparing || abort.current || !accessCode.trim()) return;
     const controller = new AbortController();
     abort.current = controller;
+    scanSnapshot.current = { ...form };
     setReading(true); setReadError(""); setExtracted(null);
     const timer = setTimeout(() => controller.abort(), 75000);
     try {
       const result = await readInvoice(imageData, accessCode, controller.signal);
-      if (!controller.signal.aborted) setExtracted(result);
+      if (mounted.current && abort.current === controller && !controller.signal.aborted) setExtracted(result);
     } catch (error) {
-      if (abort.current === controller) {
+      if (mounted.current && abort.current === controller) {
         const code = error instanceof Error ? error.message : "";
         const message = code === "UNAUTHORIZED" ? "unauthorized" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
         setReadError(t(`reader.${message}`));
       }
     } finally {
       clearTimeout(timer);
-      if (abort.current === controller) { setReading(false); abort.current = null; }
+      if (mounted.current && abort.current === controller) { setReading(false); abort.current = null; }
     }
   };
   const cancelReading = () => { const controller = abort.current; abort.current = null; controller?.abort(); setReading(false); };
+  const requestScan = () => Alert.alert(t("reader.title"), t("reader.consent"), [
+    { text: t("common.cancel"), style: "cancel" },
+    { text: t("reader.agree"), onPress: () => void scan() },
+  ]);
   const usableEntries = extracted ? Object.entries(extracted).filter(([key]) =>
     key === "title" || key === "detail" || (purchaseLike && !["dueDate"].includes(key)) || (dueLike && ["dueDate", "price", "currency", "merchant", "invoiceNumber"].includes(key))
   ) : [];
@@ -125,7 +162,7 @@ export default function NewRecord() {
   };
 
   const save = async () => {
-    if (reading || extracted) return;
+    if (reading || preparing || saving || extracted) return;
     const e: Partial<Record<keyof Form, string>> = {};
     if (!form.title.trim()) e.title = t("form.errRequired");
     const dateOrNull = (k: "purchaseDate" | "warrantyEndsOn" | "dueDate") => {
@@ -151,7 +188,14 @@ export default function NewRecord() {
     }
 
     setSaving(true);
-    const imageUri = form.imageUri && form.imageUri !== existing?.imageUri ? persistImage(form.imageUri) : form.imageUri;
+    let imageUri = form.imageUri;
+    try {
+      if (imageUri && imageUri !== existing?.imageUri) imageUri = persistImage(imageUri);
+    } catch {
+      setSaving(false);
+      Alert.alert(t("common.error"), t("reader.imageSaveFailed"));
+      return;
+    }
     const draft: RecordDraft = {
       type,
       title: form.title.trim().slice(0, 200),
@@ -194,8 +238,8 @@ export default function NewRecord() {
             <View style={{ marginBottom: space.lg }}>
               <Image source={{ uri: form.imageUri }} style={{ width: "100%", height: 200, borderRadius: radius.lg, backgroundColor: colors.neutralSoft }} resizeMode="cover" />
               <Row gap={space.sm} style={{ marginTop: space.sm }}>
-                <Button label={t("form.retake")} variant="light" icon="camera" disabled={reading} onPress={() => void pick("camera")} style={{ flex: 1 }} />
-                <Button label={t("form.removeImage")} variant="danger" icon="trash-2" disabled={reading} onPress={() => { cancelReading(); setImageData(null); setExtracted(null); setReadError(""); setForm((f) => ({ ...f, imageUri: null })); }} style={{ flex: 1 }} />
+                <Button label={t("form.retake")} variant="light" icon="camera" disabled={reading || preparing} onPress={() => void pick("camera")} style={{ flex: 1 }} />
+                <Button label={t("form.removeImage")} variant="danger" icon="trash-2" disabled={reading || preparing} onPress={() => { cancelReading(); deleteCachedImage(selectedCache.current); selectedCache.current = null; scanSnapshot.current = null; setImageData(null); setExtracted(null); setReadError(""); setForm((f) => ({ ...f, imageUri: null })); }} style={{ flex: 1 }} />
               </Row>
             </View>
           ) : (
@@ -219,14 +263,18 @@ export default function NewRecord() {
             {readerUrl ? <>
               <Txt variant="small">{t("reader.consent")}</Txt>
               <Field label={t("reader.token")} hint={t("reader.tokenHint")} value={accessCode} onChangeText={setAccessCode} secureTextEntry autoCapitalize="none" autoCorrect={false} editable={!reading} />
-              <Button label={t("reader.read")} loading={reading} disabled={!imageData || !accessCode.trim() || !!extracted} onPress={() => void scan()} />
+              <Button label={t("reader.read")} loading={reading || preparing} disabled={!imageData || !accessCode.trim() || !!extracted || preparing} onPress={requestScan} />
               {reading ? <Button label={t("reader.cancelled")} variant="light" onPress={cancelReading} /> : null}
               {readError ? <Txt variant="small">{readError}</Txt> : null}
               {extracted ? <View style={{ gap: space.sm }}>
                 <Txt variant="h3">{t("reader.review")}</Txt>
                 <Txt variant="small">{t("reader.reviewHint")}</Txt>
                 {usableEntries.map(([key, value]) => <Txt key={key} variant="small">{(key === "title" ? t(`form.nameLabel.${dueLike ? "due" : "item"}`) : t(`fields.${key}`))}: {value}</Txt>)}
-                <Button label={t("reader.apply")} disabled={!usableEntries.length} onPress={() => { setForm((f) => ({ ...f, ...Object.fromEntries(usableEntries) })); setExtracted(null); setErrors({}); }} />
+                <Button label={t("reader.apply")} disabled={!usableEntries.length} onPress={() => {
+                  const snapshot = scanSnapshot.current;
+                  setForm((f) => mergeReviewedExtraction(f, snapshot, Object.fromEntries(usableEntries)));
+                  setExtracted(null); setErrors({});
+                }} />
                 <Button label={t("reader.discard")} variant="light" onPress={() => setExtracted(null)} />
               </View> : null}
             </> : <Txt variant="small">{t("reader.unavailable")}</Txt>}
@@ -303,7 +351,7 @@ export default function NewRecord() {
             <Field label={t("fields.detail")} placeholder={t("form.notePh")} value={form.detail} onChangeText={set("detail")} multiline />
           )}
 
-          <Button label={existing ? t("common.saveChanges") : t("common.save")} variant="navy" icon="check" disabled={reading || !!extracted} loading={saving} onPress={() => void save()} style={{ marginTop: space.sm }} />
+          <Button label={existing ? t("common.saveChanges") : t("common.save")} variant="navy" icon="check" disabled={reading || preparing || !!extracted} loading={saving} onPress={() => void save()} style={{ marginTop: space.sm }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -1,8 +1,8 @@
 {
   "ios": {
     "CFBundleDisplayName": "Registro digital",
-    "NSCameraUsageDescription": "Registro digital usa la cámara para capturar recibos.",
-    "NSPhotoLibraryUsageDescription": "Registro digital te permite seleccionar fotos de recibos."
+    "NSCameraUsageDescription": "Registro digital usa la cámara para capturar recibos. La lectura IA es opcional; la imagen solo se envía para analizarla con tu consentimiento.",
+    "NSPhotoLibraryUsageDescription": "Registro digital te permite seleccionar fotos de recibos. La lectura IA es opcional; la imagen solo se envía para analizarla con tu consentimiento."
   },
   "android": {
     "app_name": "Registro digital"

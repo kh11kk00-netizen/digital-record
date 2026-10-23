@@ -1,6 +1,6 @@
 # سياسة الخصوصية
 
-آخر تحديث: 2026-10-23
+آخر تحديث: 2026-10-24
 
 ## 1. نطاق السياسة والتواصل
 
@@ -20,7 +20,7 @@
 
 ## 5. التجربة المجانية ومقدمو الخدمة
 
-تجربة القراءة الحالية خاصة ومحدودة ومخصصة للفواتير الوهمية الخالية من البيانات الشخصية. قد تستخدم Google محتوى خدماتها المجانية لتحسين منتجاتها وفق شروطها. يعالج خادم الاستضافة وGoogle الطلب والبيانات التقنية اللازمة للاتصال، وقد تشمل عنوان IP ووقت الطلب وبيانات التشغيل وفق سياساتهما. قد تتم المعالجة خارج بلدك بحسب مواقع مقدمي الخدمة. راجع شروط Google المرتبطة أدناه قبل استخدام القراءة.
+تجربة القراءة الحالية للبالغين (18+) فقط، وهي خاصة ومحدودة ومخصصة للفواتير الوهمية الخالية من البيانات الشخصية. قد تستخدم Google محتوى خدماتها المجانية لتحسين منتجاتها، وقد يراجعه أشخاص وفق شروطها. يعالج خادم الاستضافة وGoogle الطلب والبيانات التقنية اللازمة للاتصال، وقد تشمل عنوان IP ووقت الطلب وبيانات التشغيل وفق سياساتهما. قد تتم المعالجة خارج بلدك بحسب مواقع مقدمي الخدمة. راجع شروط Google المرتبطة أدناه قبل استخدام القراءة.
 
 ## 6. الاحتفاظ والحماية
 
@@ -28,11 +28,11 @@
 
 ## 7. النسخ الاحتياطية والمشاركة
 
-النسخة الاحتياطية التي تصدّرها من التطبيق تحتوي بيانات السجلات والإعدادات ولا تتضمن الصور المرفقة. عند مشاركة ملف أو تصدير بيانات تختار الجهة أو التطبيق المستلم، ويصبح الاحتفاظ بالنسخة وحمايتها خاضعًا لاختيارك وسياسة المستلم. وقد تنطبق إعدادات النسخ الاحتياطي لنظام جهازك بصورة مستقلة.
+النسخة الاحتياطية التي تصدّرها من التطبيق تحتوي بيانات السجلات ولا تتضمن الصور المرفقة. عند مشاركة ملف أو تصدير بيانات تختار الجهة أو التطبيق المستلم، ويصبح الاحتفاظ بالنسخة وحمايتها خاضعًا لاختيارك وسياسة المستلم. وقد تنطبق إعدادات النسخ الاحتياطي لنظام جهازك بصورة مستقلة.
 
 ## 8. الحذف وطلبات البيانات
 
-يمكنك تعديل سجلاتك أو حذفها، واستخدام إعادة ضبط التطبيق لحذف السجلات والصور التي يديرها التطبيق وإعداداته المحلية. لا يحذف ذلك النسخ التي صدّرتها أو شاركتها أو نسخ نظام الجهاز. لطلبات الوصول أو التصحيح أو الحذف المتعلقة ببيانات وصلت إلى فريق الدعم، راسلنا مع وصف الطلب دون إرسال كلمات المرور أو مفاتيح الخدمة. نتعامل مع الطلبات وفق الأنظمة المنطبقة وإمكانات النسخة الحالية.
+يمكنك تعديل سجلاتك أو حذفها، واستخدام إعادة ضبط التطبيق لحذف السجلات والصور المحلية التي يديرها التطبيق. لا يحذف ذلك النسخ التي صدّرتها أو شاركتها أو نسخ نظام الجهاز. لطلبات الوصول أو التصحيح أو الحذف المتعلقة ببيانات وصلت إلى فريق الدعم، راسلنا مع وصف الطلب دون إرسال كلمات المرور أو مفاتيح الخدمة. نتعامل مع الطلبات وفق الأنظمة المنطبقة وإمكانات النسخة الحالية.
 
 ## 9. الدعم وتغييرات السياسة
 
@@ -44,7 +44,7 @@
 
 # Privacy policy
 
-Last updated: 2026-10-23
+Last updated: 2026-10-24
 
 ## 1. Scope and contact
 
@@ -64,7 +64,7 @@ Attaching an image alone does not send it to the reader. After disclosure, press
 
 ## 5. Free pilot and providers
 
-The current limited private reading pilot is for fictional invoices without personal data. Google may use free-service content to improve its products under its terms. Hosting providers and Google process requests and technical connection data, which may include IP addresses, request times and operational metadata under their policies. Processing may occur outside your country depending on provider locations. Review the linked Google terms before using reading.
+The current limited private reading pilot is for adults (18+) and uses fictional invoices without personal data. Google may use free-service content to improve its products, and human reviewers may process it under its terms. Hosting providers and Google process requests and technical connection data, which may include IP addresses, request times and operational metadata under their policies. Processing may occur outside your country depending on provider locations. Review the linked Google terms before using reading.
 
 ## 6. Retention and security
 
@@ -72,11 +72,11 @@ The reader's code does not write images or extracted text to files or applicatio
 
 ## 7. Backups and sharing
 
-In-app exported backups contain record data and settings but exclude attached images. When you share a file or export data, you choose the receiving app or recipient. Retention and protection of those copies depend on your choices and the recipient's policies. Device operating-system backup settings may apply separately.
+In-app exported backups contain record data but exclude attached images. When you share a file or export data, you choose the receiving app or recipient. Retention and protection of those copies depend on your choices and the recipient's policies. Device operating-system backup settings may apply separately.
 
 ## 8. Deletion and data requests
 
-Edit or delete individual records, or reset the app to remove records, app-managed images and local preferences. This does not remove exported, shared or operating-system backup copies. For access, correction or deletion requests concerning data sent to support, email us with a description of your request, without passwords or service keys. Requests are handled under applicable requirements and the capabilities of the current version.
+Edit or delete individual records, or reset the app to remove records and app-managed images on this device. This does not remove exported, shared or operating-system backup copies. For access, correction or deletion requests concerning data sent to support, email us with a description of your request, without passwords or service keys. Requests are handled under applicable requirements and the capabilities of the current version.
 
 ## 9. Support and policy updates
 

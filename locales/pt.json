@@ -1,10 +1,10 @@
 {
   "ios": {
-    "CFBundleDisplayName": "Dijital Kayıt",
-    "NSCameraUsageDescription": "Dijital Kayıt, fişleri çekmek için kamerayı kullanır.",
-    "NSPhotoLibraryUsageDescription": "Dijital Kayıt, kayıtlarınıza eklemek için fiş fotoğrafları seçmenize olanak tanır."
+    "CFBundleDisplayName": "Registo Digital",
+    "NSCameraUsageDescription": "O Registo Digital utiliza a câmara para capturar recibos. A leitura IA é opcional; a imagem só é enviada para análise com o seu consentimento.",
+    "NSPhotoLibraryUsageDescription": "O Registo Digital permite selecionar fotos de recibos. A leitura IA é opcional; a imagem só é enviada para análise com o seu consentimento."
   },
   "android": {
-    "app_name": "Dijital Kayıt"
+    "app_name": "Registo Digital"
   }
 }

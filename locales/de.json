@@ -1,10 +1,10 @@
 {
   "ios": {
-    "CFBundleDisplayName": "Digital Record",
-    "NSCameraUsageDescription": "Digital Record uses the camera to capture receipts and add them to your records.",
-    "NSPhotoLibraryUsageDescription": "Digital Record allows you to select receipt photos to add to your records."
+    "CFBundleDisplayName": "Digitales Register",
+    "NSCameraUsageDescription": "Digitales Register verwendet die Kamera, um Belege zu erfassen. Die KI-Erkennung ist optional; das Bild wird erst nach Ihrer Zustimmung zur Analyse gesendet.",
+    "NSPhotoLibraryUsageDescription": "Digitales Register ermöglicht die Auswahl von Belegfotos. Die KI-Erkennung ist optional; das Bild wird erst nach Ihrer Zustimmung zur Analyse gesendet."
   },
   "android": {
-    "app_name": "Digital Record"
+    "app_name": "Digitales Register"
   }
 }

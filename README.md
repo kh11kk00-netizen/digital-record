@@ -58,16 +58,15 @@ git push -u origin main
 ## البناء السحابي والنشر (EAS)
 1. أنشئ حسابًا على **expo.dev** ثم مشروعًا باسم `digital-record`، وانسخ **Project ID**.
 2. من expo.dev ← Access tokens أنشئ رمزًا.
-3. في GitHub ← Settings ← Secrets and variables ← Actions:
-   - Secret: `EXPO_TOKEN`
-   - Variables: `EAS_PROJECT_ID`، `EXPO_OWNER` (اسم حسابك في Expo)، `IOS_BUNDLE_ID` و`ANDROID_PACKAGE` (مثل `com.yourname.digitalrecord`، معرّف فريد لا يمكن تغييره بعد النشر).
+3. في GitHub ← Settings ← Secrets and variables ← Actions أضف Secret باسم `EXPO_TOKEN`.
+   - المعرّفان `com.kh11kk.digitalrecord` ومعرّف مشروع EAS محفوظة في `app.json`. متغيرات `IOS_BUNDLE_ID` و`ANDROID_PACKAGE` و`EAS_PROJECT_ID` لا تغيّرها. `EXPO_OWNER` وحده اختياري لتحديد الحساب عند تشغيل الإعداد.
 4. **بيانات التوقيع (مرة واحدة):** أول بناء يحتاج شهادات Apple ومفتاح Android. أسهل طريقة: تشغيل `eas build` مرة واحدة من أي كمبيوتر بشكل تفاعلي (يسجّل دخول Apple وينشئ كل شيء ويحفظه على expo.dev). بعدها تعمل كل البناءات من GitHub تلقائيًا.
-5. GitHub ← Actions ← **EAS Build (Store)** ← Run workflow، واختر المنصة (`all` / `ios` / `android`).
+5. سير العمل **Build iOS and Android pilot** يبني المنصتين، يفحص الكود أولًا وينتظر اكتمال البناء ويحتفظ بنتيجته. يبدأ عند تغيير ملف سيره في فرع التجربة، أو يدويًا إذا كان الملف موجودًا على الفرع الافتراضي. يمكن إعادة محاولة التشغيل من Actions.
    - `production` ← ملف **AAB** لـ Google Play و**IPA** لـ App Store.
    - `preview` ← ملف APK للتجربة المباشرة على أندرويد.
-   - فعّل خيار الإرسال التلقائي ليُرفع إلى TestFlight / Play (مسار internal كمسودة).
+   - البناء لا يعني الرفع. إرسال Apple يحتاج `ascAppId` ومفتاح App Store Connect مرتبطًا بالتطبيق في Expo. إرسال Android يحتاج مفتاح Google Service Account مرتبطًا بالتطبيق في Expo وصلاحية رفع إصدارات الاختبار. يمكن رفع أول إصدار عبر EAS Submit بعد إتمام متطلبات Google Play الحالية؛ راجع https://docs.expo.dev/submit/android/.
 
-ملفات الإعداد: `eas.json` (ملفات البناء والإرسال) و`app.config.ts` (الاسم، المعرّفات، الأذونات، RTL).
+ملفات الإعداد: `eas.json` للبناء والإرسال و`app.json` للإعدادات الثابتة. `app.config.ts` يقرأها ويضيف اسم مالك Expo عند ضبطه.
 
 ---
 

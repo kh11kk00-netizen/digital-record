@@ -1,10 +1,10 @@
 {
   "ios": {
-    "CFBundleDisplayName": "Digitales Register",
-    "NSCameraUsageDescription": "Digitales Register verwendet die Kamera, um Belege zu erfassen.",
-    "NSPhotoLibraryUsageDescription": "Digitales Register ermöglicht die Auswahl von Belegfotos."
+    "CFBundleDisplayName": "Dossier numérique",
+    "NSCameraUsageDescription": "Dossier numérique utilise l'appareil photo pour capturer des reçus. La lecture IA est facultative ; la photo est envoyée pour analyse uniquement avec votre accord.",
+    "NSPhotoLibraryUsageDescription": "Dossier numérique vous permet de sélectionner des photos de reçus. La lecture IA est facultative ; la photo est envoyée pour analyse uniquement avec votre accord."
   },
   "android": {
-    "app_name": "Digitales Register"
+    "app_name": "Dossier numérique"
   }
 }

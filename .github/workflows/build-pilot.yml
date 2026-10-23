@@ -29,9 +29,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
       - run: npm run typecheck
-      - run: npm run reader:test
+      - run: npm run test:regressions
 
   build:
     needs: validate
@@ -50,7 +50,7 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-      - run: npm install
+      - run: npm ci
       - name: Build signed store binary
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

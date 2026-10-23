@@ -2,7 +2,7 @@ const en = {
   app: {
     name: "Digital Record",
     tagline: "All your records in one place",
-    subtitle: "Save, track and remember — powered by AI.",
+    subtitle: "Save, track and remember.",
   },
   common: {
     cancel: "Cancel",
@@ -24,7 +24,7 @@ const en = {
     start: "Get started",
     haveBackup: "Have a backup?",
     restore: "Restore",
-    privacy: "Your records stay on your device. No ads, no tracking.",
+    privacy: "Records are stored locally. Optional AI reading sends the image to Google Gemini after your consent.",
     f: { invoices: "Saved invoices", protected: "Protected purchases", alerts: "Timely alerts", assistant: "Smart assistant" },
   },
   types: {
@@ -334,7 +334,7 @@ const en = {
     remServices: "Maintenance, renewals & documents",
     remHour: "Reminder time",
     privacyTitle: "Privacy",
-    privacyBody: "Your records, images and reminders are stored only on this device. Backups exclude images and are shared only when you choose.",
+    privacyBody: "Records, images and reminders are local. Optional reading sends the image for analysis after consent. Exported backups exclude images.",
     reset: "Delete all records",
     resetTitle: "Delete everything?",
     resetBody: "All records and images on this device will be permanently deleted.",

@@ -2,6 +2,16 @@ export const readerUrl = process.env.EXPO_PUBLIC_OCR_URL?.replace(/\/$/, "") ?? 
 export const extractionKeys = ["title", "brand", "merchant", "purchaseDate", "price", "currency", "invoiceNumber", "warrantyMonths", "warrantyEndsOn", "returnPeriodDays", "dueDate", "detail"] as const;
 export type Extraction = Partial<Record<typeof extractionKeys[number], string>>;
 
+/** Apply only reviewed fields that have not changed since this scan started. */
+export function mergeReviewedExtraction<T extends Record<typeof extractionKeys[number], string | null>>(current: T, snapshot: T | null, fields: Extraction): T {
+  const next = { ...current };
+  if (!snapshot) return next;
+  for (const key of extractionKeys) {
+    if (typeof fields[key] === "string" && current[key] === snapshot[key]) next[key] = fields[key] as T[typeof key];
+  }
+  return next;
+}
+
 export async function readInvoice(image: string, token: string, signal: AbortSignal): Promise<Extraction> {
   if (!readerUrl.startsWith("https://")) throw Error("NOT_CONFIGURED");
   if (image.length > 8_000_000) throw Error("IMAGE_TOO_LARGE");

@@ -1,10 +1,10 @@
 {
   "ios": {
-    "CFBundleDisplayName": "Dossier numérique",
-    "NSCameraUsageDescription": "Dossier numérique utilise l'appareil photo pour capturer des reçus.",
-    "NSPhotoLibraryUsageDescription": "Dossier numérique vous permet de sélectionner des photos de reçus."
+    "CFBundleDisplayName": "Digital Record",
+    "NSCameraUsageDescription": "Digital Record uses the camera to capture receipts and add them to your records. AI reading is optional; the image is sent for analysis only after your consent.",
+    "NSPhotoLibraryUsageDescription": "Digital Record allows you to select receipt photos to add to your records. AI reading is optional; the image is sent for analysis only after your consent."
   },
   "android": {
-    "app_name": "Dossier numérique"
+    "app_name": "Digital Record"
   }
 }

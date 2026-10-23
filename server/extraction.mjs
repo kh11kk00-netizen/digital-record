@@ -9,9 +9,15 @@ export function cleanExtraction(value) {
     const raw = value[key];
     if (raw == null || raw === '') continue;
     if (typeof raw !== 'string') throw Error('INVALID_RESULT');
-    const text = raw.trim();
+    let text = raw.trim();
+    if (dates.has(key) || integers.has(key) || key === 'price') {
+      text = text.replace(/[\u0660-\u0669]/g,c=>String(c.charCodeAt(0)-0x0660))
+        .replace(/[\u06f0-\u06f9]/g,c=>String(c.charCodeAt(0)-0x06f0)).replace(/٫/g,'.');
+    }
     if (!text || text.length > (key === 'detail' ? 2000 : 200)) continue;
     if (dates.has(key)) {
+      // Never treat an unconverted Hijri year as a Gregorian purchase date.
+      if (Number(text.slice(0,4)) < 1900 || Number(text.slice(0,4)) > 2200) continue;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) continue;
       const date = new Date(text + 'T00:00:00Z');
       if (!Number.isFinite(+date) || date.toISOString().slice(0,10) !== text) continue;

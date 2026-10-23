@@ -1,60 +1,43 @@
-name: Fix structure & EAS Build
+name: EAS Build (Store)
 
 on:
   workflow_dispatch:
     inputs:
       platform:
-        description: "المنصة"
+        description: Platform
         type: choice
         options: [android, ios, all]
-        default: android
+        default: all
       submit:
-        description: "إرسال للمتجر بعد البناء"
+        description: Upload to TestFlight or Google Play internal draft after building
         type: boolean
         default: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  fix-and-build:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-
-      - name: Unzip project into repository root
-        run: |
-          shopt -s nullglob
-          zips=( *.zip )
-          if [ ! -f package.json ] && [ ${#zips[@]} -gt 0 ]; then
-            mkdir -p /tmp/unz
-            unzip -q -o "${zips[0]}" -d /tmp/unz
-            pkg=$(find /tmp/unz -name package.json -not -path '*/node_modules/*' -not -path '*/__MACOSX/*' | head -n1)
-            root=$(dirname "$pkg")
-            rm -rf "$root/.github" "$root/node_modules"
-            cp -a "$root"/. .
-            rm -f "${zips[@]}"
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "Move project files to repository root"
-            git push
-          fi
-          test -f package.json && test -f eas.json && echo "Structure OK"
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-
-      - run: npm install --no-package-lock
-
-      - name: EAS Build
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:regressions
+      - name: Build and optionally upload
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          BUILD_PLATFORM: ${{ inputs.platform }}
+          SUBMIT: ${{ inputs.submit }}
         run: |
-          FLAGS=""
-          if [ "${{ inputs.submit }}" = "true" ]; then FLAGS="--auto-submit"; fi
-          eas build --platform ${{ inputs.platform }} --profile production --non-interactive --no-wait $FLAGS
+          flags=()
+          if [ "$SUBMIT" = "true" ]; then flags+=(--auto-submit); fi
+          eas build --platform "$BUILD_PLATFORM" --profile production --non-interactive --wait "${flags[@]}"

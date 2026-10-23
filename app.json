@@ -23,8 +23,8 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Digital Record uses the camera to photograph invoices for your records.",
-        "NSPhotoLibraryUsageDescription": "Choose invoice images from your photo library to add them to your records."
+        "NSCameraUsageDescription": "Digital Record uses the camera to capture receipts and add them to your records. AI reading is optional; the image is sent for analysis only after your consent.",
+        "NSPhotoLibraryUsageDescription": "Digital Record allows you to select receipt photos to add to your records. AI reading is optional; the image is sent for analysis only after your consent."
       }
     },
     "android": {
@@ -37,6 +37,14 @@
       "permissions": [
         "POST_NOTIFICATIONS",
         "CAMERA"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ]
     },
     "web": {
@@ -67,8 +75,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Choose invoice images from your photo library to add them to your records.",
-          "cameraPermission": "Digital Record uses the camera to photograph invoices for your records."
+          "photosPermission": "Digital Record allows you to select receipt photos to add to your records. AI reading is optional; the image is sent for analysis only after your consent.",
+          "cameraPermission": "Digital Record uses the camera to capture receipts and add them to your records. AI reading is optional; the image is sent for analysis only after your consent.",
+          "microphonePermission": false
         }
       ]
     ],
@@ -78,7 +87,8 @@
       "eas": {
         "projectId": "63c38093-fadf-45e6-bb05-f7bc5c2b1b94"
       },
-      "supportEmail": "digitalrecord.app.help@gmail.com"
+      "supportEmail": "digitalrecord.app.help@gmail.com",
+      "privacyPolicyUrl": "https://github.com/kh11kk00-netizen/digital-record/blob/codex/invoice-reader-pilot/docs/privacy-policy.md"
     },
     "experiments": {
       "typedRoutes": false

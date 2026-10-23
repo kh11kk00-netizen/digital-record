@@ -16,7 +16,8 @@
     "build:all": "eas build --platform all --profile production",
     "submit:all": "eas submit --platform all --profile production --latest",
     "reader:start": "node server/index.mjs",
-    "reader:test": "node --test server/reader.test.mjs"
+    "reader:test": "node --test server/reader.test.mjs",
+    "test:regressions": "node --test server/reader.test.mjs tests/*.test.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
@@ -28,6 +29,7 @@
     "expo-document-picker": "~57.0.3",
     "expo-file-system": "~57.0.7",
     "expo-haptics": "~57.0.3",
+    "expo-image-manipulator": "~57.0.21",
     "expo-image-picker": "~57.0.20",
     "expo-linking": "~57.0.10",
     "expo-localization": "~57.0.2",
