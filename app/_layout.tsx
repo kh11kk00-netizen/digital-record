@@ -33,6 +33,7 @@ function Navigator({ langReady }: { langReady: boolean }) {
       <Stack.Screen name="record/new" options={{ presentation: "card" }} />
       <Stack.Screen name="record/[id]" />
       <Stack.Screen name="assistant" />
+      <Stack.Screen name="privacy" />
     </Stack>
   );
 }

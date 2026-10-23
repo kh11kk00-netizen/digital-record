@@ -185,11 +185,12 @@ export default function More() {
 
       <SectionHeader title={t("settings.privacyTitle")} />
       <SettingRow icon="lock" label={t("reader.privacy")} onPress={() => router.push("/privacy")} />
+      <SettingRow icon="file-text" label={i18n.language.startsWith("ar") ? "شروط الاستخدام" : "Terms of use"} onPress={() => router.push({ pathname: "/privacy", params: { section: "terms" } })} />
       <Card style={{ gap: space.sm }}>
         <Row gap={space.sm}>
           <Feather name="lock" size={18} color={colors.success} />
           <Txt variant="small" style={{ flex: 1 }}>
-            {t("reader.policy")}
+            {i18n.language.startsWith("ar") ? "تُحفظ سجلاتك محليًا. القراءة الآلية اختيارية وترسل الصورة إلى Google Gemini بعد طلبك. راجع سياسة الخصوصية للتفاصيل والتواصل." : "Records are stored locally. Optional AI reading sends the selected image to Google Gemini when you request it. See the privacy policy for details and contact information."}
           </Txt>
         </Row>
       </Card>

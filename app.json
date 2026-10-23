@@ -1,0 +1,88 @@
+{
+  "expo": {
+    "name": "السجل الرقمي",
+    "slug": "digital-record",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "digitalrecord",
+    "userInterfaceStyle": "light",
+    "locales": {
+      "ar": "./locales/ar.json",
+      "en": "./locales/en.json",
+      "fr": "./locales/fr.json",
+      "es": "./locales/es.json",
+      "de": "./locales/de.json",
+      "tr": "./locales/tr.json",
+      "pt": "./locales/pt.json"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kh11kk.digitalrecord",
+      "buildNumber": "1",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Digital Record uses the camera to photograph invoices for your records.",
+        "NSPhotoLibraryUsageDescription": "Choose invoice images from your photo library to add them to your records."
+      }
+    },
+    "android": {
+      "package": "com.kh11kk.digitalrecord",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#102B4E"
+      },
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#102B4E"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#2463EB",
+          "defaultChannel": "deadlines"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose invoice images from your photo library to add them to your records.",
+          "cameraPermission": "Digital Record uses the camera to photograph invoices for your records."
+        }
+      ]
+    ],
+    "extra": {
+      "supportsRTL": true,
+      "router": {},
+      "eas": {
+        "projectId": "63c38093-fadf-45e6-bb05-f7bc5c2b1b94"
+      },
+      "supportEmail": "digitalrecord.app.help@gmail.com"
+    },
+    "experiments": {
+      "typedRoutes": false
+    },
+    "description": "Save invoices, warranties and important reminders. Review optional AI invoice extraction before saving."
+  }
+}
