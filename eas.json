@@ -35,7 +35,7 @@
         "buildType": "app-bundle"
       },
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "medium"
       },
       "env": {
         "EXPO_PUBLIC_OCR_URL": "https://bookish-doodle-r76x7vqr9rq43wjqv-8787.app.github.dev"
