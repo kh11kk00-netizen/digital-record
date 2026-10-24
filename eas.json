@@ -62,14 +62,18 @@
         "track": "internal",
         "releaseStatus": "draft"
       },
-      "ios": {}
+      "ios": {
+        "ascAppId": "6825120606"
+      }
     },
     "pilot": {
       "android": {
         "track": "internal",
         "releaseStatus": "completed"
       },
-      "ios": {}
+      "ios": {
+        "ascAppId": "6825120606"
+      }
     }
   }
 }
