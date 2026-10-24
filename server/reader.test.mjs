@@ -43,3 +43,16 @@ test('private reader authenticates, forwards image, sanitizes output and persist
     assert.equal(calls,1);
   } finally {await stop();rmSync(dir,{recursive:true,force:true});}
 });
+test('oversized uploads are refused from Content-Length before reading the body', async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'reader-test-'));
+  const server=createReader({key:'k',token:'private-test-code-1234567890',usagePath:join(dir,'usage.json'),fetcher:async()=>{throw Error('must not call provider');}});
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  try {
+    const {request}=await import('node:http');
+    const status=await new Promise((resolve,reject)=>{
+      const req=request({host:'127.0.0.1',port:server.address().port,path:'/extract',method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer private-test-code-1234567890','Content-Length':'9000000'}},res=>{resolve(res.statusCode);res.resume();});
+      req.on('error',reject);req.end();
+    });
+    assert.equal(status,413);
+  } finally {await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true});}
+});

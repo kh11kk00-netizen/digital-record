@@ -50,7 +50,7 @@ Only the ten requested items were changed. No branch merge or EAS build was requ
 | 5 | Review displays current ← extracted value with a switch per field. Only fields empty at scan start are selected by default. Apply uses selected fields and retains the snapshot race guard. Existing values, opt-in, opt-out and intervening edits are tested. |
 | 6 | Reader strings, including consent, translated into all seven languages and registered. Settings uses privacyBody and translated terms. |
 | 7 | Non-JSON, malformed JSON, 404 and 5xx responses raise SERVER_UNAVAILABLE before field processing. Seven translations explain that manual entry remains available. API error and hosting error paths are tested. |
-| 8 | App and setup documentation point to https://kh11kk00-netizen.github.io/digital-record/privacy.html. Independent site/ contains privacy and terms in Arabic/English. A separate Pages-only workflow publishes site/ from main; no app code is merged into main. Publication status is recorded below after the deployment attempt. |
+| 8 | App and setup documentation point to https://kh11kk00-netizen.github.io/digital-record-site/privacy.html. Independent site/ contains privacy and terms in Arabic/English. A separate Pages-only workflow publishes site/ from main; no app code is merged into main. Publication status is recorded below after the deployment attempt. |
 | 9 | pilot refuses missing/short OCR_ACCESS_TOKEN; no random fallback. Regression checks both cases. |
 | 10 | Direct execution compares fileURLToPath(import.meta.url) with resolve(process.argv[1]), guarded for imports. Regression launches from a relative path in a directory containing spaces and Arabic characters. |
 

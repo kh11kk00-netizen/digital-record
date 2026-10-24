@@ -39,7 +39,7 @@ Set this same public URL in the EAS build environment before a new build. A loca
 
 ## Before public release
 
-Replace the shared private-test code with per-user authentication and durable quotas, deploy durable hosting, review actual Apple/Google store disclosures. Contact is digitalrecord.app.help@gmail.com. The policy is publicly readable at https://kh11kk00-netizen.github.io/digital-record/privacy.html and is linked in the app. Google may use free-tier content to improve products, including human review; use synthetic invoices for this private pilot. Do not claim "Data Not Collected" without reviewing the actual cloud processing. A public release also needs a provider setup appropriate for its audience and launch countries.
+Replace the shared private-test code with per-user authentication and durable quotas, deploy durable hosting, review actual Apple/Google store disclosures. Contact is digitalrecord.app.help@gmail.com. The policy is publicly readable at https://kh11kk00-netizen.github.io/digital-record-site/privacy.html and is linked in the app. Google may use free-tier content to improve products, including human review; use synthetic invoices for this private pilot. Do not claim "Data Not Collected" without reviewing the actual cloud processing. A public release also needs a provider setup appropriate for its audience and launch countries.
 
 ## Verification
 

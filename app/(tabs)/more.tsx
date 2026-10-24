@@ -4,10 +4,11 @@ import * as DocumentPicker from "expo-document-picker";
 import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Modal, Platform, Pressable, Share, Switch, View } from "react-native";
+import { Alert, Linking, Modal, Platform, Pressable, Share, Switch, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { TypeGlyph } from "@/components/RecordIcon";
 import { Card, Chevron, Header, Row, Screen, SectionHeader, Txt, type FeatherName } from "@/components/ui";
+import { PRIVACY_POLICY_URL } from "@/content/legal";
 import { LANGUAGES, setLanguage, type LanguageCode } from "@/i18n";
 import { readTextFile, writeTempText } from "@/lib/files";
 import { ensurePermission } from "@/lib/notifications";
@@ -184,7 +185,7 @@ export default function More() {
       </Card>
 
       <SectionHeader title={t("settings.privacyTitle")} />
-      <SettingRow icon="lock" label={t("reader.privacy")} onPress={() => router.push("/privacy")} />
+      <SettingRow icon="lock" label={t("reader.privacy")} onPress={() => void Linking.openURL(PRIVACY_POLICY_URL).catch(() => router.push("/privacy"))} />
       <SettingRow icon="file-text" label={t("settings.terms")} onPress={() => router.push({ pathname: "/privacy", params: { section: "terms" } })} />
       <Card style={{ gap: space.sm }}>
         <Row gap={space.sm}>

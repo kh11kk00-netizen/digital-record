@@ -23,6 +23,6 @@ server.listen(8787,'0.0.0.0',()=>{
   if (process.env.CODESPACE_NAME && process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN) {
     console.log('READER URL: https://'+process.env.CODESPACE_NAME+'-8787.'+process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN);
   }
-  console.log('PRIVATE TEST CODE: '+token);
+  console.log('Access code loaded from OCR_ACCESS_TOKEN (not printed).');
   console.log('Forward port 8787 over HTTPS before using a physical device. Use fictional invoices for this pilot.');
 });

@@ -1,5 +1,6 @@
 export const SUPPORT_EMAIL = "digitalrecord.app.help@gmail.com";
 export const LEGAL_UPDATED = "2026-10-24";
+export const PRIVACY_POLICY_URL = "https://kh11kk00-netizen.github.io/digital-record-site/privacy.html";
 export const GOOGLE_TERMS_URL = "https://ai.google.dev/gemini-api/terms";
 export type LegalSection = { title: string; body: string };
 

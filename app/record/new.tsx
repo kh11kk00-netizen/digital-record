@@ -133,7 +133,8 @@ export default function NewRecord() {
     abort.current = controller;
     scanSnapshot.current = { ...form };
     setReading(true); setReadError(""); setExtracted(null);
-    const timer = setTimeout(() => controller.abort(), 75000);
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, 75000);
     try {
       const result = await readInvoice(imageData, accessCode, controller.signal);
       if (mounted.current && abort.current === controller && !controller.signal.aborted) {
@@ -143,8 +144,8 @@ export default function NewRecord() {
       }
     } catch (error) {
       if (mounted.current && abort.current === controller) {
-        const code = error instanceof Error ? error.message : "";
-        const message = code === "SERVER_UNAVAILABLE" ? "serverUnavailable" : code === "UNAUTHORIZED" ? "unauthorized" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
+        const code = timedOut ? "TIMEOUT" : error instanceof Error ? error.message : "";
+        const message = code === "NETWORK" ? "offline" : code === "TIMEOUT" ? "timeout" : code === "SERVER_UNAVAILABLE" ? "serverUnavailable" : code === "UNAUTHORIZED" ? "unauthorized" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
         setReadError(t(`reader.${message}`));
       }
     } finally {

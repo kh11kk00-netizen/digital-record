@@ -1,4 +1,5 @@
 const en = {
+  offline: "No internet connection. Check your connection and try again; manual entry still works.", timeout: "The reader took too long to respond. Try again, or enter the details manually.",
   selectField: "Apply {{field}}", serverUnavailable: "The reading server is currently unavailable. Manual entry is still available.",
   agree: "Agree and send this image", imageSaveFailed: "The invoice image could not be saved. Free some device space and try again; your record has not been saved.",
   title: "Read invoice", read: "Read and fill fields", token: "Private test access code", tokenHint: "Enter the test code supplied by the app owner. It stays in memory for this screen only.",
@@ -9,6 +10,7 @@ const en = {
   unauthorized: "Check the private test access code.", limit: "The reading limit has been reached. Try again later or enter details manually.", unreadable: "No clear details were found. Try a clearer photo or enter details manually.", tooLarge: "Image is too large. Choose a smaller image (under 6 MB).", privacy: "Privacy policy", policy: "Records and images are saved on your device. Reminders run locally. Backups you export exclude images. Optional image reading sends only the selected image through the reader server to Google Gemini after you press Read. The reader does not save image content or extracted text; it stores daily request counts. The hosting provider and Google may process technical metadata under their policies. This private free-tier pilot is for fictional invoices: Google may use free-tier content to improve products, and human reviewers may process it. Access codes are kept in memory for the current screen. AI results may be wrong; review before saving. Delete records or reset the app to remove local data. Public release requires a published policy with owner contact details and accurate store disclosures.",
 };
 const ar: typeof en = {
+  offline: "لا يوجد اتصال بالإنترنت. تحقق من الاتصال وحاول مجددًا؛ الإدخال اليدوي ما زال متاحًا.", timeout: "استغرقت القراءة وقتًا أطول من المتوقع. حاول مجددًا أو أدخل البيانات يدويًا.",
   selectField: "تطبيق {{field}}", serverUnavailable: "خادم القراءة غير متاح حاليًا. ما زال الإدخال اليدوي متاحًا.",
   agree: "أوافق وأرسل هذه الصورة", imageSaveFailed: "تعذر حفظ صورة الفاتورة. تحقق من المساحة المتاحة وحاول مجددًا؛ لم يُحفظ السجل.",
   title: "قراءة الفاتورة", read: "قراءة وتعبئة البيانات", token: "رمز الوصول للتجربة الخاصة", tokenHint: "أدخل رمز التجربة الذي يقدمه مالك التطبيق. يُحفظ مؤقتًا أثناء فتح هذه الشاشة فقط.",
@@ -21,6 +23,7 @@ const ar: typeof en = {
 
 
 const fr: typeof en = {
+  offline: "Pas de connexion Internet. Vérifiez votre connexion et réessayez ; la saisie manuelle reste disponible.", timeout: "La lecture a pris trop de temps. Réessayez ou saisissez les données manuellement.",
   "agree": "Accepter et envoyer cette image",
   "imageSaveFailed": "Impossible d’enregistrer l’image. Libérez de l’espace puis réessayez ; le dossier n’a pas été enregistré.",
   "title": "Lire la facture",
@@ -46,6 +49,7 @@ const fr: typeof en = {
 };
 
 const es: typeof en = {
+  offline: "Sin conexión a Internet. Comprueba la conexión e inténtalo de nuevo; la entrada manual sigue disponible.", timeout: "La lectura tardó demasiado. Inténtalo de nuevo o introduce los datos manualmente.",
   "agree": "Aceptar y enviar esta imagen",
   "imageSaveFailed": "No se pudo guardar la imagen. Libera espacio y vuelve a intentarlo; el registro no se ha guardado.",
   "title": "Leer factura",
@@ -71,6 +75,7 @@ const es: typeof en = {
 };
 
 const de: typeof en = {
+  offline: "Keine Internetverbindung. Prüfe die Verbindung und versuche es erneut; die manuelle Eingabe bleibt verfügbar.", timeout: "Das Lesen hat zu lange gedauert. Versuche es erneut oder gib die Daten manuell ein.",
   "agree": "Zustimmen und dieses Bild senden",
   "imageSaveFailed": "Das Bild konnte nicht gespeichert werden. Speicher freigeben und erneut versuchen; der Eintrag wurde nicht gespeichert.",
   "title": "Rechnung lesen",
@@ -96,6 +101,7 @@ const de: typeof en = {
 };
 
 const pt: typeof en = {
+  offline: "Sem ligação à Internet. Verifique a ligação e tente novamente; a introdução manual continua disponível.", timeout: "A leitura demorou demasiado. Tente novamente ou introduza os dados manualmente.",
   "agree": "Concordar e enviar esta imagem",
   "imageSaveFailed": "Não foi possível guardar a imagem. Liberte espaço e tente novamente; o registo não foi guardado.",
   "title": "Ler fatura",
@@ -121,6 +127,7 @@ const pt: typeof en = {
 };
 
 const tr: typeof en = {
+  offline: "İnternet bağlantısı yok. Bağlantınızı kontrol edip tekrar deneyin; elle giriş hâlâ kullanılabilir.", timeout: "Okuma çok uzun sürdü. Tekrar deneyin veya bilgileri elle girin.",
   "agree": "Kabul et ve bu görseli gönder",
   "imageSaveFailed": "Görsel kaydedilemedi. Yer açıp tekrar deneyin; kayıt saklanmadı.",
   "title": "Faturayı oku",
