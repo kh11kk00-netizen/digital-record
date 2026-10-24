@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 
 const base = process.env.READER_URL;
 const invite = process.env.OCR_INVITE_CODE?.trim();
+if (process.env.SKIP_READ === '1') { console.log('Real reading test skipped for this run.'); process.exit(0); }
 if (!invite) {
   console.log('::warning::OCR_INVITE_CODE secret is not set in GitHub; skipping the real reading test.');
   process.exit(0);

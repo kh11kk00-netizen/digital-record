@@ -29,6 +29,9 @@ await tryQuery('Android service account key for submissions', `query($appId: Str
 await tryQuery('iOS App Store Connect API key for submissions', `query($appId: String!) { app { byId(appId: $appId) { iosAppCredentials { appleAppIdentifier { bundleIdentifier } appStoreConnectApiKeyForSubmissions { id } } } } }`,
   (d) => d.app.byId.iosAppCredentials.map((c) => ({bundle: c.appleAppIdentifier?.bundleIdentifier, hasSubmissionKey: !!c.appStoreConnectApiKeyForSubmissions})));
 
+await tryQuery('Latest submissions with errors', `query($appId: String!) { app { byId(appId: $appId) { submissions(filter: {}, offset: 0, limit: 4) { platform status createdAt updatedAt error { errorCode message } } } } }`,
+  (d) => d.app.byId.submissions.map((s) => ({platform: s.platform, status: s.status, createdAt: s.createdAt, updatedAt: s.updatedAt, error: s.error ? `${s.error.errorCode}: ${String(s.error.message).slice(0, 300)}` : null})));
+
 // Public lookup works only if the app is live on the App Store.
 try {
   const lookup = await (await fetch(`https://itunes.apple.com/lookup?bundleId=${bundleId}`)).json();

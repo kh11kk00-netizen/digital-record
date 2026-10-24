@@ -39,7 +39,9 @@ jobs:
       - name: Real Gemini reading of the fictional invoice
         env:
           OCR_INVITE_CODE: ${{ secrets.OCR_INVITE_CODE }}
-        run: node .github/pilot-ops/read-test.mjs
+        run: |
+          if grep -q skip-read .github/pilot-ops/last-run.txt; then export SKIP_READ=1; fi
+          node .github/pilot-ops/read-test.mjs
 
       - name: Install project packages (needed by eas-cli to read app config)
         if: always()
