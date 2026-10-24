@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Chip, Field, Header, Row, Txt } from "@/components/ui";
 import { deviceCurrency } from "@/i18n";
 import { coerceDateInput, looksHijri, normalizeDigits, parseAmount } from "@/lib/dates";
-import { defaultExtractionSelection, fetchReaderUsage, usableExtraction, mergeReviewedExtraction, readerUrl, readInvoice, registerReader, ReaderError, type Extraction, type ReaderUsage } from "@/lib/invoice-reader";
+import { defaultExtractionSelection, fetchReaderUsage, MAX_IMAGE_BASE64, usableExtraction, mergeReviewedExtraction, readerUrl, readInvoice, registerReader, ReaderError, type Extraction, type ReaderUsage } from "@/lib/invoice-reader";
 import { clearReaderToken, loadReaderToken, saveReaderToken } from "@/lib/reader-identity";
 import { deleteCachedImage, persistImage } from "@/lib/files";
 import { formatDays, formatMonths } from "@/lib/format";
@@ -114,12 +114,17 @@ export default function NewRecord() {
         let rendered;
         let photo;
         try {
-          if (Math.max(asset.width, asset.height) > 2400) context.resize(asset.width >= asset.height ? { width: 2400 } : { height: 2400 });
+          // 1600 px keeps invoice text legible and keeps uploads small enough for the reader's CPU budget.
+          if (Math.max(asset.width, asset.height) > 1600) context.resize(asset.width >= asset.height ? { width: 1600 } : { height: 1600 });
           rendered = await context.renderAsync();
-          photo = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.8, base64: !!readerUrl });
+          photo = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.75, base64: !!readerUrl });
+          if (photo.base64 && photo.base64.length > 1_400_000) {
+            deleteCachedImage(photo.uri);
+            photo = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.5, base64: true });
+          }
         } finally { rendered?.release(); context.release(); }
         preparedUri = photo.uri;
-        if (photo.base64 && photo.base64.length > 8_000_000) throw Error("IMAGE_TOO_LARGE");
+        if (photo.base64 && photo.base64.length > MAX_IMAGE_BASE64) throw Error("IMAGE_TOO_LARGE");
         if (!mounted.current) return;
         abort.current?.abort();
         deleteCachedImage(selectedCache.current);

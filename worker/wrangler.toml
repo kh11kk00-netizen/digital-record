@@ -1,0 +1,27 @@
+# Cloudflare Workers free plan + D1. No payment method is needed for these limits;
+# exceeding a free-plan limit returns errors instead of charges.
+name = "digital-record-reader"
+main = "src/index.mjs"
+compatibility_date = "2026-09-01"
+workers_dev = true
+# Requests and responses are not logged by the Worker; keep Cloudflare request logging off.
+[observability]
+enabled = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "digital-record-reader"
+database_id = "REPLACE_WITH_DATABASE_ID"
+migrations_dir = "migrations"
+
+# Secrets (set with `npx wrangler secret put`, never in this file): GEMINI_API_KEY, OCR_INVITE_CODE.
+[vars]
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+# Pilot: invite only, 20 testers x 20 reads per month.
+OCR_PLANS = '{"free":{"monthlyReads":20},"paid":{"monthlyReads":200}}'
+OCR_DAILY_READS = "100"
+OCR_DAILY_BUDGET_USD = "0.5"
+OCR_MONTHLY_BUDGET_USD = "4"
+OCR_DAILY_REGISTRATIONS = "30"
+OCR_REGISTRATIONS_PER_IP_HOUR = "5"
+OCR_REQUESTS_PER_USER_MINUTE = "4"

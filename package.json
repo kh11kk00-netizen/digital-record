@@ -15,9 +15,9 @@
     "build:ios": "eas build --platform ios --profile production",
     "build:all": "eas build --platform all --profile production",
     "submit:all": "eas submit --platform all --profile production --latest",
-    "reader:start": "node --disable-warning=ExperimentalWarning server/index.mjs",
-    "reader:test": "node --disable-warning=ExperimentalWarning --test server/reader.test.mjs",
-    "test:regressions": "node --disable-warning=ExperimentalWarning --test server/reader.test.mjs tests/*.test.mjs"
+    "reader:dev": "npm --prefix worker run dev",
+    "reader:test": "node --disable-warning=ExperimentalWarning --test tests/worker.test.mjs",
+    "test:regressions": "node --disable-warning=ExperimentalWarning --test tests/*.test.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",

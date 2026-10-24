@@ -29,12 +29,20 @@ export function cleanExtraction(value) {
   }
   return result;
 }
+const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
+/**
+ * Cheap checks that fit the Workers free-plan CPU budget: size, base64 shape at both ends, and the
+ * JPEG/PNG signature. Gemini rejects malformed base64 itself, and that failure is refunded.
+ */
 export function validateImage(body) {
-  if (typeof body?.image !== 'string' || body.image.length > 8_000_000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(body.image)) throw Error('INVALID_IMAGE');
-  const bytes = Buffer.from(body.image, 'base64');
-  if (bytes.toString('base64') !== body.image) throw Error('INVALID_IMAGE');
-  const jpeg = bytes[0]===255 && bytes[1]===216 && bytes[2]===255;
-  const png = bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
+  const image = body?.image;
+  if (typeof image !== 'string' || image.length < 8 || image.length > 2_000_000 || image.length % 4 !== 0) throw Error('INVALID_IMAGE');
+  if (!BASE64.test(image.slice(0, 4096)) || !BASE64.test(image.slice(-4096))) throw Error('INVALID_IMAGE');
+  let head;
+  try { head = atob(image.slice(0, 12)); } catch { throw Error('INVALID_IMAGE'); }
+  const bytes = Array.from(head, (c) => c.charCodeAt(0));
+  const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((b, i) => bytes[i] === b);
   if (!jpeg && !png) throw Error('INVALID_IMAGE');
   return jpeg ? 'image/jpeg' : 'image/png';
 }

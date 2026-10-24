@@ -1,4 +1,6 @@
 export const readerUrl = process.env.EXPO_PUBLIC_OCR_URL?.replace(/\/$/, "") ?? "";
+/** Must match the reader server limit (worker/src/extraction.mjs). */
+export const MAX_IMAGE_BASE64 = 2_000_000;
 export const extractionKeys = ["title", "brand", "merchant", "purchaseDate", "price", "currency", "invoiceNumber", "warrantyMonths", "warrantyEndsOn", "returnPeriodDays", "dueDate", "detail"] as const;
 export type Extraction = Partial<Record<typeof extractionKeys[number], string>>;
 
@@ -100,7 +102,7 @@ export async function fetchReaderUsage(token: string, signal?: AbortSignal): Pro
 
 export async function readInvoice(image: string, token: string, signal: AbortSignal): Promise<ReadResult> {
   if (!readerUrl.startsWith("https://")) throw new ReaderError("NOT_CONFIGURED");
-  if (image.length > 8_000_000) throw new ReaderError("IMAGE_TOO_LARGE");
+  if (image.length > MAX_IMAGE_BASE64) throw new ReaderError("IMAGE_TOO_LARGE");
   const { data } = await call("/v1/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token.trim()}` },

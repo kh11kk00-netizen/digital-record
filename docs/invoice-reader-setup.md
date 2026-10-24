@@ -1,54 +1,66 @@
-# Invoice reader: hosting, limits and usage accounting
+# Invoice reader: Cloudflare Workers + D1 (free plan) and Gemini free tier
 
-The reader is a small Node 22.13+ service in `server/`. The Gemini key lives only in the server's secret store. The app only knows the public HTTPS base URL (`EXPO_PUBLIC_OCR_URL`), which is baked in at build time from the EAS environment.
+The reader is a Cloudflare Worker in `worker/` with a D1 database for usage counters. The pilot runs entirely on free plans with **no payment method attached anywhere**, so nothing can be billed: when a free limit is reached, requests fail instead of being charged.
+
+- Gemini key: created in Google AI Studio in a project **without** a billing account. Stored only as a Worker secret.
+- The app knows only the public base URL (`EXPO_PUBLIC_OCR_URL`), baked in at build time for the `pilot` profile.
+- Free-tier Gemini content may be used by Google to improve its products and may be reviewed by people, so the pilot uses **fictional invoices without personal data only**.
 
 ## How users and quotas work
 
-- On the first read, the app calls `POST /v1/register` and receives an anonymous token `dr1.<id>.<secret>`. No name, email or phone number. The app keeps it in the Keychain/Keystore (`expo-secure-store`, this-device-only, excluded from Android backup). Resetting the app deletes it.
-- The server stores only: the ID, a SHA-256 hash of the secret, plan, optional per-user limit, disabled flag, timestamps, and monthly/daily counters (reads, refunds, input/output tokens, estimated cost). Never images, extracted text, IPs or provider responses. Nothing is logged per request.
-- `POST /v1/extract` reserves one read atomically before calling Gemini. Provider failures (5xx, 429, network) are refunded. A completed provider call counts even if nothing readable came back, because it is billed.
-- Cost is computed from Gemini's `usageMetadata` (thinking tokens billed as output) with the prices in `GEMINI_INPUT_USD_PER_M` / `GEMINI_OUTPUT_USD_PER_M`.
-- Pilot gate: when `OCR_INVITE_CODE` is set, registration requires it (entered once per device). Remove it later for the public free tier, after adding App Attest / Play Integrity.
+- First read: the app calls `POST /v1/register` (with the pilot invite code) and receives an anonymous token `dr1.<id>.<secret>`. No name, email or phone number. The app keeps it in the Keychain/Keystore (this device only, excluded from backups); resetting the app deletes it.
+- D1 stores only: the ID, a SHA-256 hash of the secret, plan, optional per-user limit, disabled flag, timestamps, a per-minute request counter, and monthly/daily counters (reads, refunds, input/output tokens, estimated cost). Never images, extracted text, IPs or provider responses. The Worker logs nothing and Workers observability is off.
+- Every limit is one atomic SQL statement, so parallel requests across isolates cannot exceed it.
+- Provider failures (5xx, 429, network) are refunded. A completed provider call counts even if nothing readable came back.
+- Estimated cost uses Gemini's `usageMetadata` at paid-tier prices. Nothing is billed on the free tier; the estimate caps usage and informs future pricing.
+- The per-IP registration limit lives in isolate memory only (best effort). The hard protections are the invite code, the daily registration cap and the per-user limits.
 
-## Limits (all environment variables, no code change)
+## Limits (`worker/wrangler.toml` `[vars]`, no code change)
 
-| Variable | Default | Meaning |
+| Variable | Pilot value | Meaning |
 |---|---|---|
-| `OCR_PLANS` | `{"free":{"monthlyReads":10},"paid":{"monthlyReads":200}}` | Reads per calendar month (UTC) per plan |
-| `OCR_DAILY_READS` | 300 | Global reads per UTC day |
-| `OCR_DAILY_BUDGET_USD` | 1 | Global estimated Gemini spend per UTC day; reads stop when reached |
-| `OCR_MONTHLY_BUDGET_USD` | 5 | Hard ceiling on estimated Gemini spend per UTC month, all users |
-| `OCR_DAILY_REGISTRATIONS` | 100 | New anonymous IDs per day |
-| `OCR_REGISTRATIONS_PER_IP_HOUR` | 5 | In-memory only; IPs are never written to disk |
-| `OCR_REQUESTS_PER_USER_MINUTE` | 4 | Per-user burst limit; one request in flight per user |
-| `OCR_MAX_CONCURRENT` | 4 | Provider calls in parallel |
-| `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Model name |
-| `OCR_CLIENT_IP_HEADER` | empty | Proxy header with the client IP (`fly-client-ip` on Fly.io) |
+| `OCR_PLANS` | free 20, paid 200 | Reads per calendar month (UTC) per plan |
+| `OCR_DAILY_READS` | 100 | Global reads per UTC day |
+| `OCR_DAILY_BUDGET_USD` | 0.5 | Global estimated spend per UTC day |
+| `OCR_MONTHLY_BUDGET_USD` | 4 | Global estimated spend per UTC month |
+| `OCR_DAILY_REGISTRATIONS` | 30 | New anonymous IDs per day |
+| `OCR_REGISTRATIONS_PER_IP_HOUR` | 5 | In-memory, best effort |
+| `OCR_REQUESTS_PER_USER_MINUTE` | 4 | Per user |
+| `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Model |
 
-## Administration (on the host only, not exposed over HTTP)
+Images are limited to 2,000,000 base64 characters (about 1.5 MB). The app resizes photos to 1600 px JPEG first, which keeps each request well inside the free plan's 10 ms CPU limit (about 3 ms measured for a typical photo).
 
-```bash
-fly ssh console -C "node admin.mjs report"            # this month by plan, today vs caps, top users
-fly ssh console -C "node admin.mjs user <id>"
-fly ssh console -C "node admin.mjs set-plan <id> paid"
-fly ssh console -C "node admin.mjs set-limit <id> 50"  # or: default
-fly ssh console -C "node admin.mjs disable <id>"
-```
+## Deploy (owner, about 10 minutes, no card)
 
-## Deploying on Fly.io
+1. Create a free Cloudflare account. Do not add a payment method.
+2. In Google AI Studio, create an API key in a project with **no billing account**. Do not link billing.
+3. From the repository:
 
 ```bash
-cd server
-fly launch --no-deploy --copy-config          # keeps fly.toml; pick a unique app name if taken
-fly volumes create reader_data --size 1 --region fra
-fly secrets set GEMINI_API_KEY=...             # type it yourself; never in git, chat, eas.json or EXPO_PUBLIC_*
-fly secrets set OCR_INVITE_CODE=...            # 12+ characters, shared with pilot testers only
-fly deploy
-curl https://<app>.fly.dev/health
+cd worker
+npm install
+npx wrangler login                                   # opens the browser
+npx wrangler d1 create digital-record-reader         # copy database_id into wrangler.toml
+npx wrangler d1 migrations apply digital-record-reader --remote
+npx wrangler secret put GEMINI_API_KEY               # paste the key; it is not shown or saved locally
+npx wrangler secret put OCR_INVITE_CODE              # 12+ characters, shared with testers only
+npx wrangler deploy                                  # prints https://digital-record-reader.<subdomain>.workers.dev
+curl https://digital-record-reader.<subdomain>.workers.dev/health
 ```
 
-Then set `EXPO_PUBLIC_OCR_URL=https://<app>.fly.dev` in the EAS `preview` environment (pilot profile). Leave production unset until the pilot passes. Run one machine only: the counters are a single SQLite file on the volume.
+Then the URL goes into `eas.json` `build.pilot.env.EXPO_PUBLIC_OCR_URL` (the URL is public; the key is not in it).
+
+## Administration (your Cloudflare login, not exposed over HTTP)
+
+```bash
+cd worker
+node admin.mjs report            # this month by plan, daily totals, top users
+node admin.mjs user <id>
+node admin.mjs set-limit <id> 40 # or: default
+node admin.mjs set-plan <id> paid
+node admin.mjs disable <id>
+```
 
 ## Verification
 
-`npm run test:regressions` covers registration and invite gating, token forgery, per-user monthly limits across restarts, refunds, cost accounting, the daily budget stop, the admin tool, and that the database holds no image, text or secret. Provider responses are mocked, so a real device test with real invoices is still required.
+`npm run test:regressions` runs the Worker's real SQL against SQLite: invite gating, token forgery, per-user monthly limits and month rollover, concurrent reservations, per-minute limits, refunds, cost accounting, daily and monthly caps, and that stored data contains no image, text, IP or secret. `npm run reader:dev` runs the Worker locally on workerd with a local D1.
