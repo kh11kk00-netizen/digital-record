@@ -32,3 +32,15 @@
 - Enter the **invite code** once per device in the "Read invoice" section, then tap "Read and fill fields" and confirm.
 - Each tester has **20 reads per month**; the remaining count is shown under the button. Manual entry always works.
 - Send feedback through TestFlight or to digitalrecord.app.help@gmail.com, without attaching real invoices.
+
+---
+
+## نص «ماذا تختبر» لـ TestFlight / What to Test
+
+قراءة الفواتير بالذكاء الاصطناعي (تجربة بالدعوة). استخدم فواتير وهمية فقط بلا بيانات شخصية. أدخل رمز الدعوة مرة واحدة في قسم «قراءة الفاتورة». لكل مختبر 20 قراءة شهريًا. راجع القيم قبل الحفظ وأرسل ملاحظاتك من TestFlight.
+
+AI invoice reading (invitation-only pilot). Use fictional invoices only, with no personal data. Enter the invite code once in "Read invoice". 20 reads per tester per month. Review values before saving and send feedback through TestFlight.
+
+## رسالة دعوة المختبر (أرسل الرمز في رسالة منفصلة خاصة)
+
+مرحبًا، أدعوك لتجربة «السجل الرقمي». ثبّت النسخة من رابط TestFlight (آيفون/آيباد) أو رابط اختبار Google Play (أندرويد). عند قراءة فاتورة سيُطلب منك رمز الدعوة الذي سأرسله لك. استخدم فواتير وهمية فقط بلا أي بيانات شخصية؛ تُرسل الصورة إلى Google Gemini (الخدمة المجانية) وقد تستخدمها Google لتحسين منتجاتها. التجربة للبالغين.
