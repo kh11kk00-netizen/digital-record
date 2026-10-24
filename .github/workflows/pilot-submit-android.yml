@@ -27,7 +27,7 @@ jobs:
       - name: Confirm package and track
         run: |
           node -e "const a=require('./app.json').expo;console.log('android.package:',a.android.package)"
-          node -e "const e=require('./eas.json');console.log('pilot submit profile:',JSON.stringify(e.submit.pilot.android))"
+          node -e "const e=require('./eas.json');const a=e.submit.pilot.android;if(a.track!=='internal')throw Error('pilot submit track must be internal');console.log('pilot submit profile:',JSON.stringify(a))"
       - name: Store credentials (presence only)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

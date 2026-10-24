@@ -1,4 +1,4 @@
-name: Build iOS and Android pilot
+name: Build iOS and Android pilot (uploads to TestFlight and Play internal testing only)
 
 on:
   workflow_dispatch:
@@ -29,6 +29,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run test:regressions
+      - name: Refuse anything but internal testing
+        run: |
+          node -e "const e=require('./eas.json');const a=e.submit.pilot.android;if(a.track!=='internal')throw Error('pilot submit track must be internal, got '+a.track);if(!e.submit.pilot.ios.ascAppId)throw Error('missing ascAppId');console.log('pilot uploads: Play',a.track,'+ TestFlight',e.submit.pilot.ios.ascAppId)"
 
   build:
     needs: validate
@@ -45,14 +48,18 @@ jobs:
           node-version: 22
       - uses: expo/expo-github-action@v8
         with:
-          eas-version: latest
+          eas-version: 24.12.0
           token: ${{ secrets.EXPO_TOKEN }}
       - run: npm ci
       - name: Build signed store binary
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           BUILD_PLATFORM: ${{ matrix.platform }}
-        run: eas build --platform "$BUILD_PLATFORM" --profile pilot --non-interactive --wait --json > build-result.json
+        # Uploads with the "pilot" submit profile: TestFlight, and the Google Play internal track only.
+        run: |
+          eas build --platform "$BUILD_PLATFORM" --profile pilot --auto-submit-with-profile pilot \
+            --what-to-test "قراءة الفواتير بالدعوة: فواتير وهمية فقط بلا بيانات شخصية. Invoice reading pilot: fictional invoices only." \
+            --non-interactive --wait --json > build-result.json
       - name: Save build result
         if: always()
         uses: actions/upload-artifact@v4

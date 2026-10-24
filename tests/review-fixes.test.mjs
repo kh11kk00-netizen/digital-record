@@ -52,3 +52,13 @@ test('7: hosting errors and invalid JSON report SERVER_UNAVAILABLE; API errors r
     assert.deepEqual((await client.readInvoice('image','token',new AbortController().signal)).fields,{title:'Receipt'});
   } finally {globalThis.fetch=oldFetch;if(oldURL===undefined)delete process.env.EXPO_PUBLIC_OCR_URL;else process.env.EXPO_PUBLIC_OCR_URL=oldURL;}
 });
+test('pilot builds point at the reader and upload only to internal testing and TestFlight',()=>{
+  const eas=JSON.parse(readFileSync(new URL('../eas.json',import.meta.url),'utf8'));
+  const app=JSON.parse(readFileSync(new URL('../app.json',import.meta.url),'utf8')).expo;
+  assert.equal(app.android.package,'com.kh11kk.digitalrecord');
+  assert.equal(app.ios.bundleIdentifier,'com.kh11kk.digitalrecord');
+  assert.equal(eas.build.pilot.env.EXPO_PUBLIC_OCR_URL,'https://digital-record-reader.kh11kk00.workers.dev');
+  assert.equal(eas.submit.pilot.android.track,'internal');
+  assert.equal(eas.submit.pilot.ios.ascAppId,'6825120606');
+  assert.equal(eas.build.production.env?.EXPO_PUBLIC_OCR_URL,undefined);
+});

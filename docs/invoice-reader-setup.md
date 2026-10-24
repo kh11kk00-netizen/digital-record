@@ -64,3 +64,9 @@ node admin.mjs disable <id>
 ## Verification
 
 `npm run test:regressions` runs the Worker's real SQL against SQLite: invite gating, token forgery, per-user monthly limits and month rollover, concurrent reservations, per-minute limits, refunds, cost accounting, daily and monthly caps, and that stored data contains no image, text, IP or secret. `npm run reader:dev` runs the Worker locally on workerd with a local D1.
+
+## Releasing a new pilot build (testers only)
+
+- GitHub → Actions → **Build iOS and Android pilot** → Run workflow (on `main`). It runs typecheck and tests, refuses any submit profile other than the Play **internal** track, builds both platforms with the `pilot` profile (reader URL included), and uploads automatically: iOS to TestFlight (app 6825120606), Android to Google Play internal testing (`com.kh11kk.digitalrecord`, release status completed). Version codes increase automatically on EAS, so an existing version (such as 8) is never uploaded again.
+- To re-upload one specific existing Android build to internal testing, put its EAS build ID in `.github/pilot-ops/android-build-id.txt` on the pilot branch and push.
+- Nothing here publishes to production or the public.
