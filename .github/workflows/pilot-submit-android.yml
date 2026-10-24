@@ -5,7 +5,8 @@ name: Submit Android pilot build to Google Play internal testing
 on:
   push:
     branches: [claude/friendly-goldberg-5108aq]
-    paths: ['.github/pilot-ops/android-build-id.txt', '.github/workflows/pilot-submit-android.yml']
+    # Only an explicit build ID change triggers an upload; editing this workflow never does.
+    paths: ['.github/pilot-ops/android-build-id.txt']
 
 permissions:
   contents: read
@@ -39,4 +40,5 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           BUILD_ID=$(tr -d '[:space:]' < .github/pilot-ops/android-build-id.txt)
+          if [ -z "$BUILD_ID" ]; then echo "No build ID set; nothing to upload."; exit 0; fi
           npx --yes eas-cli@24.12.0 submit --platform android --id "$BUILD_ID" --profile pilot --non-interactive --wait

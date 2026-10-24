@@ -68,5 +68,5 @@ node admin.mjs disable <id>
 ## Releasing a new pilot build (testers only)
 
 - GitHub → Actions → **Build iOS and Android pilot** → Run workflow (on `main`). It runs typecheck and tests, refuses any submit profile other than the Play **internal** track, builds both platforms with the `pilot` profile (reader URL included), and uploads automatically: iOS to TestFlight (app 6825120606), Android to Google Play internal testing (`com.kh11kk.digitalrecord`, release status completed). Version codes increase automatically on EAS, so an existing version (such as 8) is never uploaded again.
-- To re-upload one specific existing Android build to internal testing, put its EAS build ID in `.github/pilot-ops/android-build-id.txt` on the pilot branch and push.
+- To upload one specific existing Android build to internal testing (for example after a failed automatic upload), put its EAS build ID in `.github/pilot-ops/android-build-id.txt` on the pilot branch and push. The file is kept empty otherwise; editing the workflow itself never uploads.
 - Nothing here publishes to production or the public.
