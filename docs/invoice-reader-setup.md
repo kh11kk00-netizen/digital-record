@@ -1,50 +1,53 @@
-# Private invoice reading pilot
+# Invoice reader: hosting, limits and usage accounting
 
-This change implements the app review flow and a separate Node 22+ reader. It does not deploy a server or enable OCR in an already installed build. Model: `gemini-3.5-flash-lite` (confirmed by the owner's text smoke test). Real image extraction still needs an end-to-end device test.
+The reader is a small Node 22.13+ service in `server/`. The Gemini key lives only in the server's secret store. The app only knows the public HTTPS base URL (`EXPO_PUBLIC_OCR_URL`), which is baked in at build time from the EAS environment.
 
-## Start in the existing Codespace terminal
+## How users and quotas work
 
-The owner has already exported `GEMINI_API_KEY`. Do not paste that key in chat, git, client code, or any `EXPO_PUBLIC_` variable.
+- On the first read, the app calls `POST /v1/register` and receives an anonymous token `dr1.<id>.<secret>`. No name, email or phone number. The app keeps it in the Keychain/Keystore (`expo-secure-store`, this-device-only, excluded from Android backup). Resetting the app deletes it.
+- The server stores only: the ID, a SHA-256 hash of the secret, plan, optional per-user limit, disabled flag, timestamps, and monthly/daily counters (reads, refunds, input/output tokens, estimated cost). Never images, extracted text, IPs or provider responses. Nothing is logged per request.
+- `POST /v1/extract` reserves one read atomically before calling Gemini. Provider failures (5xx, 429, network) are refunded. A completed provider call counts even if nothing readable came back, because it is billed.
+- Cost is computed from Gemini's `usageMetadata` (thinking tokens billed as output) with the prices in `GEMINI_INPUT_USD_PER_M` / `GEMINI_OUTPUT_USD_PER_M`.
+- Pilot gate: when `OCR_INVITE_CODE` is set, registration requires it (entered once per device). Remove it later for the public free tier, after adding App Attest / Play Integrity.
 
-Generate a separate test access code and start the reader:
+## Limits (all environment variables, no code change)
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `OCR_PLANS` | `{"free":{"monthlyReads":10},"paid":{"monthlyReads":200}}` | Reads per calendar month (UTC) per plan |
+| `OCR_DAILY_READS` | 300 | Global reads per UTC day |
+| `OCR_DAILY_BUDGET_USD` | 1 | Global estimated Gemini spend per UTC day; reads stop when reached |
+| `OCR_DAILY_REGISTRATIONS` | 100 | New anonymous IDs per day |
+| `OCR_REGISTRATIONS_PER_IP_HOUR` | 5 | In-memory only; IPs are never written to disk |
+| `OCR_REQUESTS_PER_USER_MINUTE` | 4 | Per-user burst limit; one request in flight per user |
+| `OCR_MAX_CONCURRENT` | 4 | Provider calls in parallel |
+| `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Model name |
+| `OCR_CLIENT_IP_HEADER` | empty | Proxy header with the client IP (`fly-client-ip` on Fly.io) |
+
+## Administration (on the host only, not exposed over HTTP)
 
 ```bash
-read -r -s -p "Choose a private access code (24+ characters): " OCR_ACCESS_TOKEN
-export OCR_ACCESS_TOKEN
-echo
-npm run reader:start
+fly ssh console -C "node admin.mjs report"            # this month by plan, today vs caps, top users
+fly ssh console -C "node admin.mjs user <id>"
+fly ssh console -C "node admin.mjs set-plan <id> paid"
+fly ssh console -C "node admin.mjs set-limit <id> 50"  # or: default
+fly ssh console -C "node admin.mjs disable <id>"
 ```
 
-Choose your own access code; enter the same code in the app's private test access-code field. It is held in screen memory, never written to records or backups. The reader fails closed without a valid server secret. `/health` discloses only readiness; `/extract` requires the test code.
-
-Forward port **8787** in Codespaces. A physical device needs an HTTPS endpoint accessible to it (Codespaces public port for the private pilot, protected by the strong test code). Codespaces must remain running. Do not put real personal receipts into this free pilot. For reliable hosting use one Node process with a persistent writable volume, HTTPS and body/access logging disabled. Do not run multiple replicas with the file counter.
-
-In a second terminal, set only the HTTPS base URL (no `/extract`, no provider key), then build your test app:
+## Deploying on Fly.io
 
 ```bash
-export EXPO_PUBLIC_OCR_URL='https://YOUR-FORWARDED-8787-URL'
-npm run typecheck
+cd server
+fly launch --no-deploy --copy-config          # keeps fly.toml; pick a unique app name if taken
+fly volumes create reader_data --size 1 --region fra
+fly secrets set GEMINI_API_KEY=...             # type it yourself; never in git, chat, eas.json or EXPO_PUBLIC_*
+fly secrets set OCR_INVITE_CODE=...            # 12+ characters, shared with pilot testers only
+fly deploy
+curl https://<app>.fly.dev/health
 ```
 
-Set this same public URL in the EAS build environment before a new build. A locally exported URL does not automatically configure remote EAS builds. No key needs to be put in EAS; it stays in the reader process/server secret storage. Until the URL is configured, the app displays a manual-entry message. Saved older images need to be selected again to read them.
-
-## Limits and handling
-
-- Default `OCR_DAILY_LIMIT=20` requests per UTC day, including failed provider requests. Only one provider request at a time. Counts persist in `server-data/usage.json`; set `OCR_USAGE_FILE` to a persistent-volume path when hosting. Removing that file resets the counter. This is an application request cap, not a billing cap on other uses of the key.
-- The app converts selected images to JPEG, limits the longest edge to 2400 pixels and compresses before reading. The server accepts JPEG/PNG only, maximum 6 MB decoded / 8 million base64 characters. Request timeout 60 seconds, client timeout 75 seconds. No automatic retries.
-- The reader saves no images, extracted fields or raw provider errors and logs no requests. Hosting infrastructure and Google have their own metadata/retention policies.
-- The user explicitly confirms a disclosure naming Google Gemini, free-tier content use and human review before sending each image. This pilot is for adults using fictional invoices. Results must be reviewed before Apply. Missing fields and fields edited after the scan began remain unchanged. Invalid dates/numbers are discarded; Arabic and Persian digits are normalized. Hijri-only dates are not converted or labelled as Gregorian. No default purchase date for new receipts.
-- Cancel, image replacement, screen unmount and timeout abort the app request; an already accepted provider request may still complete/count. Saving is blocked until extraction is reviewed or discarded.
-- Internal policy route works from More and invoice entry. Reader disclosures and controls are translated into all seven supported languages.
-
-## Before public release
-
-Replace the shared private-test code with per-user authentication and durable quotas, deploy durable hosting, review actual Apple/Google store disclosures. Contact is digitalrecord.app.help@gmail.com. The policy is publicly readable at https://kh11kk00-netizen.github.io/digital-record-site/privacy.html and is linked in the app. Google may use free-tier content to improve products, including human review; use synthetic invoices for this private pilot. Do not claim "Data Not Collected" without reviewing the actual cloud processing. A public release also needs a provider setup appropriate for its audience and launch countries.
+Then set `EXPO_PUBLIC_OCR_URL=https://<app>.fly.dev` in the EAS `preview` environment (pilot profile). Leave production unset until the pilot passes. Run one machine only: the counters are a single SQLite file on the volume.
 
 ## Verification
 
-`npm run test:regressions` covers authentication, image validation, sanitized extraction, Arabic/Persian digits, cap persistence, image-copy failure, cache cleanup, preserved manual edits and aborted requests. Provider responses are mocked: these checks do not prove Gemini image quality. On a physical device test a fictional Arabic and English receipt, missing warranty/date, a blurry image, cancellation and a wrong access code; confirm normal manual entry still saves correctly. After updating server files, restart the Codespaces reader so it uses the new backend.
-
-## EAS environment separation
-
-No server URL is stored in eas.json. The pilot profile uses the EAS `preview` environment: configure EXPO_PUBLIC_OCR_URL there after durable hosting is ready. Production uses the separate `production` environment; leave this variable unset there to keep manual entry only. Local shell variables must also be unset for production builds. The pilot workflow is manual-only; pushing fixes does not build. The launcher requires a stable OCR_ACCESS_TOKEN of at least 24 characters on every restart.
+`npm run test:regressions` covers registration and invite gating, token forgery, per-user monthly limits across restarts, refunds, cost accounting, the daily budget stop, the admin tool, and that the database holds no image, text or secret. Provider responses are mocked, so a real device test with real invoices is still required.

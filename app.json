@@ -79,6 +79,12 @@
           "cameraPermission": "Digital Record uses the camera to capture receipts and add them to your records. AI reading is optional; the image is sent for analysis only after your consent.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
       ]
     ],
     "extra": {

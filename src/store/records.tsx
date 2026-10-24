@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { deleteImage } from "@/lib/files";
+import { clearReaderToken } from "@/lib/reader-identity";
 import { uid } from "@/lib/id";
 import { DEFAULT_PREFS, syncReminders, type ReminderPrefs } from "@/lib/notifications";
 import { RECORD_TYPES, type DigitalRecord, type RecordDraft } from "@/lib/types";
@@ -178,6 +179,7 @@ export function RecordsProvider({ children }: { children: ReactNode }) {
     records.forEach((r) => deleteImage(r.imageUri));
     setRecords([]);
     await AsyncStorage.multiRemove([KEY_RECORDS]);
+    await clearReaderToken();
   }, [records]);
 
   const value = useMemo<Store>(

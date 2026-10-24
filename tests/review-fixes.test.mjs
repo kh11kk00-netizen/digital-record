@@ -52,13 +52,13 @@ test('7: hosting errors and invalid JSON report SERVER_UNAVAILABLE; API errors r
     globalThis.fetch=async()=>new Response('{"error":"UNAUTHORIZED"}',{status:401,headers:{'content-type':'application/json'}});
     await assert.rejects(client.readInvoice('image','token',new AbortController().signal),/UNAUTHORIZED/);
     globalThis.fetch=async()=>new Response('{"fields":{"title":"Receipt"}}',{headers:{'content-type':'application/json; charset=utf-8'}});
-    assert.deepEqual(await client.readInvoice('image','token',new AbortController().signal),{title:'Receipt'});
+    assert.deepEqual((await client.readInvoice('image','token',new AbortController().signal)).fields,{title:'Receipt'});
   } finally {globalThis.fetch=oldFetch;if(oldURL===undefined)delete process.env.EXPO_PUBLIC_OCR_URL;else process.env.EXPO_PUBLIC_OCR_URL=oldURL;}
 });
 test('10: direct server entry starts from a relative Unicode path with spaces',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'reader عربي space '));
   cpSync(new URL('../server/',import.meta.url),join(dir,'server'),{recursive:true});
-  const child=spawn(process.execPath,['server/index.mjs'],{cwd:dir,env:{...process.env,GEMINI_API_KEY:'test-key',OCR_ACCESS_TOKEN:'a'.repeat(24),PORT:'0',HOST:'127.0.0.1',OCR_USAGE_FILE:join(dir,'usage.json')},stdio:['ignore','pipe','pipe']});
+  const child=spawn(process.execPath,['--disable-warning=ExperimentalWarning','server/index.mjs'],{cwd:dir,env:{...process.env,GEMINI_API_KEY:'test-key',PORT:'0',HOST:'127.0.0.1',OCR_DB_PATH:join(dir,'reader.db')},stdio:['ignore','pipe','pipe']});
   try {
     await new Promise((resolve,reject)=>{
       let output='';const timeout=setTimeout(()=>reject(Error('server did not start')),5000);
@@ -68,9 +68,18 @@ test('10: direct server entry starts from a relative Unicode path with spaces',a
     });
   } finally {child.kill();await new Promise(resolve=>child.once('close',resolve));rmSync(dir,{recursive:true,force:true});}
 });
-test('9: pilot refuses missing and short access codes without generating a replacement',()=>{
-  for(const token of ['', 'short']){
-    const result=spawnSync(process.execPath,['server/pilot.mjs'],{cwd:new URL('../',import.meta.url),env:{...process.env,GEMINI_API_KEY:'test',OCR_ACCESS_TOKEN:token},encoding:'utf8',timeout:3000});
-    assert.equal(result.status,1);assert.match(result.stderr,/OCR_ACCESS_TOKEN.*24/);assert.doesNotMatch(result.stdout,/PRIVATE TEST CODE/);
-  }
+test('9: admin tool reports usage and adjusts per-user plan and limit on the host only',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'reader-admin-'));
+  const env={...process.env,OCR_DB_PATH:join(dir,'reader.db')};
+  const run=(...args)=>spawnSync(process.execPath,['--disable-warning=ExperimentalWarning','server/admin.mjs',...args],{cwd:new URL('../',import.meta.url),env,encoding:'utf8',timeout:5000});
+  try {
+    const setup=spawnSync(process.execPath,['--disable-warning=ExperimentalWarning','--input-type=module','-e',"import {openStore} from './server/store.mjs';const s=openStore(process.env.OCR_DB_PATH);console.log(s.register(5).id);s.close();"],{cwd:new URL('../',import.meta.url),env,encoding:'utf8'});
+    const id=setup.stdout.trim();
+    assert.match(id,/^[\w-]{16}$/);
+    assert.equal(run('set-plan',id,'paid').stdout.trim(),'OK');
+    assert.equal(run('set-limit',id,'25').stdout.trim(),'OK');
+    assert.match(run('user',id).stdout,/plan: 'paid'[\s\S]*limit: 25/);
+    assert.notEqual(run('set-plan',id,'gold').status,0);
+    assert.match(run('report').stdout,/Period \d{4}-\d{2}/);
+  } finally {rmSync(dir,{recursive:true,force:true});}
 });

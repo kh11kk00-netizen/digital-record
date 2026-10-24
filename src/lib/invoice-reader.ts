@@ -46,35 +46,72 @@ export function validExtractionValue(key: Field, raw: string): string | null {
   return value;
 }
 
-export async function readInvoice(image: string, token: string, signal: AbortSignal): Promise<Extraction> {
-  if (!readerUrl.startsWith("https://")) throw Error("NOT_CONFIGURED");
-  if (image.length > 8_000_000) throw Error("IMAGE_TOO_LARGE");
+export type ReaderUsage = { plan: string; used: number; limit: number; remaining: number; period: string; resetsAt: string };
+export type ReadResult = { fields: Extraction; usage: ReaderUsage | null };
+
+function parseUsage(raw: unknown): ReaderUsage | null {
+  if (!raw || typeof raw !== "object") return null;
+  const u = raw as Record<string, unknown>;
+  const nums = ["used", "limit", "remaining"].every((k) => Number.isInteger(u[k]) && (u[k] as number) >= 0);
+  return nums && typeof u.plan === "string" && typeof u.period === "string" && typeof u.resetsAt === "string" ? (u as unknown as ReaderUsage) : null;
+}
+
+/** Errors carry the server's usage snapshot when it sends one (for example on QUOTA_EXCEEDED). */
+export class ReaderError extends Error {
+  usage: ReaderUsage | null;
+  constructor(code: string, usage: ReaderUsage | null = null) { super(code); this.usage = usage; }
+}
+
+async function call(path: string, init: RequestInit, signal?: AbortSignal): Promise<{ response: Response; data: Record<string, any> }> {
+  if (!readerUrl.startsWith("https://")) throw new ReaderError("NOT_CONFIGURED");
   let response: Response;
   try {
-    response = await fetch(readerUrl + "/extract", {
-      method: "POST", signal,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token.trim()}` },
-      body: JSON.stringify({ image }),
-    });
+    response = await fetch(readerUrl + path, { ...init, signal });
   } catch (error) {
     // An aborted request is reported by the caller (cancel or timeout); anything else is a connection failure.
-    if (signal.aborted) throw error;
-    throw Error("NETWORK");
+    if (signal?.aborted) throw error;
+    throw new ReaderError("NETWORK");
   }
-  if (response.status === 404 || response.status >= 500 || !/^application\/(?:[\w.-]+\+)?json\b/i.test(response.headers.get("content-type") ?? "")) throw Error("SERVER_UNAVAILABLE");
+  if (response.status === 404 || response.status >= 500 || !/^application\/(?:[\w.-]+\+)?json\b/i.test(response.headers.get("content-type") ?? "")) throw new ReaderError("SERVER_UNAVAILABLE");
   let data;
   try { data = await response.json(); } catch (error) {
-    if (signal.aborted) throw error;
-    throw Error("SERVER_UNAVAILABLE");
+    if (signal?.aborted) throw error;
+    throw new ReaderError("SERVER_UNAVAILABLE");
   }
-  if (!data || typeof data !== "object") throw Error("SERVER_UNAVAILABLE");
-  if (!response.ok) throw Error(typeof data.error === "string" ? data.error : "PROVIDER_UNAVAILABLE");
-  if (!data.fields || typeof data.fields !== "object") throw Error("UNREADABLE");
+  if (!data || typeof data !== "object") throw new ReaderError("SERVER_UNAVAILABLE");
+  if (!response.ok) throw new ReaderError(typeof data.error === "string" ? data.error : "PROVIDER_UNAVAILABLE", parseUsage(data.usage));
+  return { response, data };
+}
+
+/** Creates an anonymous reader identity. The invite code is only needed while the server requires one (pilot). */
+export async function registerReader(inviteCode: string, signal?: AbortSignal): Promise<{ token: string; usage: ReaderUsage | null }> {
+  const { data } = await call("/v1/register", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(inviteCode.trim() ? { inviteCode: inviteCode.trim() } : {}),
+  }, signal);
+  if (typeof data.token !== "string" || !/^dr1\.[\w-]{16}\.[\w-]{43}$/.test(data.token)) throw new ReaderError("SERVER_UNAVAILABLE");
+  return { token: data.token, usage: parseUsage(data.usage) };
+}
+
+export async function fetchReaderUsage(token: string, signal?: AbortSignal): Promise<ReaderUsage | null> {
+  const { data } = await call("/v1/usage", { method: "GET", headers: { Authorization: `Bearer ${token}` } }, signal);
+  return parseUsage(data.usage);
+}
+
+export async function readInvoice(image: string, token: string, signal: AbortSignal): Promise<ReadResult> {
+  if (!readerUrl.startsWith("https://")) throw new ReaderError("NOT_CONFIGURED");
+  if (image.length > 8_000_000) throw new ReaderError("IMAGE_TOO_LARGE");
+  const { data } = await call("/v1/extract", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token.trim()}` },
+    body: JSON.stringify({ image }),
+  }, signal);
+  if (!data.fields || typeof data.fields !== "object") throw new ReaderError("UNREADABLE", parseUsage(data.usage));
   const fields: Extraction = {};
   for (const key of extractionKeys) {
     const value = typeof data.fields[key] === "string" ? validExtractionValue(key, data.fields[key]) : null;
     if (value !== null) fields[key] = value;
   }
-  if (!Object.keys(fields).length) throw Error("UNREADABLE");
-  return fields;
+  if (!Object.keys(fields).length) throw new ReaderError("UNREADABLE", parseUsage(data.usage));
+  return { fields, usage: parseUsage(data.usage) };
 }

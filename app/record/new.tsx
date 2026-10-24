@@ -10,7 +10,8 @@ import { useTranslation } from "react-i18next";
 import { Button, Chip, Field, Header, Row, Txt } from "@/components/ui";
 import { deviceCurrency } from "@/i18n";
 import { coerceDateInput, looksHijri, normalizeDigits, parseAmount } from "@/lib/dates";
-import { defaultExtractionSelection, usableExtraction, mergeReviewedExtraction, readerUrl, readInvoice, type Extraction } from "@/lib/invoice-reader";
+import { defaultExtractionSelection, fetchReaderUsage, usableExtraction, mergeReviewedExtraction, readerUrl, readInvoice, registerReader, ReaderError, type Extraction, type ReaderUsage } from "@/lib/invoice-reader";
+import { clearReaderToken, loadReaderToken, saveReaderToken } from "@/lib/reader-identity";
 import { deleteCachedImage, persistImage } from "@/lib/files";
 import { formatDays, formatMonths } from "@/lib/format";
 import { ensurePermission } from "@/lib/notifications";
@@ -47,8 +48,18 @@ export default function NewRecord() {
     mounted.current = true;
     return () => { mounted.current = false; abort.current?.abort(); deleteCachedImage(selectedCache.current); };
   }, []);
+  useEffect(() => {
+    if (!readerUrl) return;
+    void loadReaderToken().then((token) => {
+      if (!mounted.current) return;
+      setReaderToken(token);
+      if (token) void fetchReaderUsage(token).then((u) => { if (mounted.current) setUsage(u); }).catch(() => {});
+    });
+  }, []);
   const [imageData, setImageData] = useState<string | null>(null);
-  const [accessCode, setAccessCode] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [readerToken, setReaderToken] = useState<string | null | undefined>(readerUrl ? undefined : null);
+  const [usage, setUsage] = useState<ReaderUsage | null>(null);
   const [reading, setReading] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [extracted, setExtracted] = useState<Extraction | null>(null);
@@ -128,7 +139,7 @@ export default function NewRecord() {
   };
 
   const scan = async () => {
-    if (!imageData || reading || preparing || abort.current || !accessCode.trim()) return;
+    if (!imageData || reading || preparing || abort.current || readerToken === undefined) return;
     const controller = new AbortController();
     abort.current = controller;
     scanSnapshot.current = { ...form };
@@ -136,16 +147,34 @@ export default function NewRecord() {
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; controller.abort(); }, 75000);
     try {
-      const result = await readInvoice(imageData, accessCode, controller.signal);
+      let token = readerToken;
+      if (!token) {
+        const created = await registerReader(inviteCode, controller.signal);
+        await saveReaderToken(created.token);
+        token = created.token;
+        if (mounted.current) { setReaderToken(token); setInviteCode(""); setUsage(created.usage); }
+      }
+      const result = await readInvoice(imageData, token, controller.signal);
+      if (mounted.current) setUsage(result.usage);
       if (mounted.current && abort.current === controller && !controller.signal.aborted) {
-        const fields = usableExtraction(type, result);
+        const fields = usableExtraction(type, result.fields);
         setSelectedFields(defaultExtractionSelection(scanSnapshot.current!, fields));
         setExtracted(fields);
       }
     } catch (error) {
       if (mounted.current && abort.current === controller) {
         const code = timedOut ? "TIMEOUT" : error instanceof Error ? error.message : "";
-        const message = code === "NETWORK" ? "offline" : code === "TIMEOUT" ? "timeout" : code === "SERVER_UNAVAILABLE" ? "serverUnavailable" : code === "UNAUTHORIZED" ? "unauthorized" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
+        if (error instanceof ReaderError && error.usage) setUsage(error.usage);
+        if (code === "UNAUTHORIZED") {
+          // The identity was revoked or lost on the server; a new one is created on the next read.
+          void clearReaderToken(); setReaderToken(null); setUsage(null);
+        }
+        if (code === "QUOTA_EXCEEDED") {
+          const resets = error instanceof ReaderError && error.usage ? new Date(error.usage.resetsAt).toLocaleDateString() : "";
+          setReadError(t("reader.quota", { limit: error instanceof ReaderError ? error.usage?.limit ?? "" : "", date: resets }));
+          return;
+        }
+        const message = code === "NETWORK" ? "offline" : code === "TIMEOUT" ? "timeout" : code === "SERVER_UNAVAILABLE" ? "serverUnavailable" : code === "UNAUTHORIZED" ? "unauthorized" : code === "INVALID_INVITE" ? "invalidInvite" : ["DAILY_LIMIT", "PROVIDER_LIMIT", "BUSY", "TOO_MANY_REQUESTS"].includes(code) ? "limit" : code === "UNREADABLE" ? "unreadable" : code === "IMAGE_TOO_LARGE" ? "tooLarge" : "failed";
         setReadError(t(`reader.${message}`));
       }
     } finally {
@@ -266,8 +295,9 @@ export default function NewRecord() {
             <Txt variant="h3">{t("reader.title")}</Txt>
             {readerUrl ? <>
               <Txt variant="small">{t("reader.consent")}</Txt>
-              <Field label={t("reader.token")} hint={t("reader.tokenHint")} value={accessCode} onChangeText={setAccessCode} secureTextEntry autoCapitalize="none" autoCorrect={false} editable={!reading} />
-              <Button label={t("reader.read")} loading={reading || preparing} disabled={!imageData || !accessCode.trim() || !!extracted || preparing} onPress={requestScan} />
+              {readerToken === null ? <Field label={t("reader.invite")} hint={t("reader.inviteHint")} value={inviteCode} onChangeText={setInviteCode} autoCapitalize="none" autoCorrect={false} editable={!reading} /> : null}
+              {usage ? <Txt variant="small">{t("reader.remaining", { remaining: usage.remaining, limit: usage.limit })}</Txt> : null}
+              <Button label={t("reader.read")} loading={reading || preparing} disabled={!imageData || readerToken === undefined || !!extracted || preparing} onPress={requestScan} />
               {reading ? <Button label={t("reader.cancelled")} variant="light" onPress={cancelReading} /> : null}
               {readError ? <Txt variant="small">{readError}</Txt> : null}
               {extracted ? <View style={{ gap: space.sm }}>
