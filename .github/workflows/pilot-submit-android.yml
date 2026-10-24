@@ -1,0 +1,42 @@
+name: Submit Android pilot build to Google Play internal testing
+
+# Uploads an existing EAS build to the internal testing track only (never production).
+# The build ID comes from .github/pilot-ops/android-build-id.txt. Uses the service account key stored in EAS.
+on:
+  push:
+    branches: [claude/friendly-goldberg-5108aq]
+    paths: ['.github/pilot-ops/android-build-id.txt', '.github/workflows/pilot-submit-android.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pilot-submit-android
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - name: Confirm package and track
+        run: |
+          node -e "const a=require('./app.json').expo;console.log('android.package:',a.android.package)"
+          node -e "const e=require('./eas.json');console.log('pilot submit profile:',JSON.stringify(e.submit.pilot.android))"
+      - name: Store credentials (presence only)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PROJECT_ID: 63c38093-fadf-45e6-bb05-f7bc5c2b1b94
+          BUNDLE_ID: com.kh11kk.digitalrecord
+        run: node .github/pilot-ops/store-info.mjs
+      - name: Submit to internal testing
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          BUILD_ID=$(tr -d '[:space:]' < .github/pilot-ops/android-build-id.txt)
+          npx --yes eas-cli@24.12.0 submit --platform android --id "$BUILD_ID" --profile pilot --non-interactive --wait
