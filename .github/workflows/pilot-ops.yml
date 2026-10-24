@@ -41,7 +41,12 @@ jobs:
           OCR_INVITE_CODE: ${{ secrets.OCR_INVITE_CODE }}
         run: node .github/pilot-ops/read-test.mjs
 
+      - name: Install project packages (needed by eas-cli to read app config)
+        if: always()
+        run: npm ci --no-audit --no-fund
+
       - name: Set reader URL in EAS preview environment
+        if: always()
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
@@ -50,6 +55,7 @@ jobs:
           npx --yes eas-cli@24.12.0 env:list preview --format short --non-interactive 2>/dev/null | grep -E '^EXPO_PUBLIC_' || true
 
       - name: Store credentials and App Store Connect app ID (presence only)
+        if: always()
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: node .github/pilot-ops/store-info.mjs
