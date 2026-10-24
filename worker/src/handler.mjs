@@ -39,7 +39,7 @@ export function costMicroUsd(usage, prices) {
 const json = (status, body) => new Response(JSON.stringify(body), {status, headers:{'Content-Type':'application/json', 'Cache-Control':'no-store'}});
 
 // No image, extracted text, key, token or provider response is logged or stored.
-export function createHandler(config, {store, fetcher = (...args) => fetch(...args), now = () => new Date()}) {
+export function createHandler(config, {store, fetcher = (url, init) => fetch(url, init), now = () => new Date()}) {
   const registerLimiter = windowLimiter(config.registrationsPerIpPerHour, 3_600_000);
   const limitFor = (user) => user.monthly_limit ?? config.plans[user.plan]?.monthlyReads ?? 0;
   const clock = () => { const d = now(); return {date:d, iso:d.toISOString(), day:d.toISOString().slice(0, 10), period:d.toISOString().slice(0, 7), minute:Math.floor(d.getTime() / 60000)}; };

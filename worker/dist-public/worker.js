@@ -214,7 +214,7 @@ function costMicroUsd(usage, prices) {
 }
 __name(costMicroUsd, "costMicroUsd");
 var json = /* @__PURE__ */ __name((status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } }), "json");
-function createHandler(config, { store, fetcher = /* @__PURE__ */ __name((...args) => fetch(...args), "fetcher"), now = /* @__PURE__ */ __name(() => /* @__PURE__ */ new Date(), "now") }) {
+function createHandler(config, { store, fetcher = /* @__PURE__ */ __name((url, init) => fetch(url, init), "fetcher"), now = /* @__PURE__ */ __name(() => /* @__PURE__ */ new Date(), "now") }) {
   const registerLimiter = windowLimiter(config.registrationsPerIpPerHour, 36e5);
   const limitFor = /* @__PURE__ */ __name((user) => user.monthly_limit ?? config.plans[user.plan]?.monthlyReads ?? 0, "limitFor");
   const clock = /* @__PURE__ */ __name(() => {
