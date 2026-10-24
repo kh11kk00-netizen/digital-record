@@ -49,6 +49,10 @@
       },
       "ios": {
         "resourceClass": "medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "pilot",
+        "EXPO_PUBLIC_OCR_URL": "https://digital-record-reader.kh11kk00.workers.dev"
       }
     }
   },
@@ -57,6 +61,13 @@
       "android": {
         "track": "internal",
         "releaseStatus": "draft"
+      },
+      "ios": {}
+    },
+    "pilot": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "completed"
       },
       "ios": {}
     }
