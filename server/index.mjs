@@ -100,7 +100,7 @@ export function createReader(config, {fetcher=fetch, store=openStore(config.dbPa
         let mimeType;
         try { mimeType = validateImage(body); } catch { return send(400, {error:'INVALID_IMAGE'}); }
         // Reserve before calling the provider so concurrent requests cannot exceed the limit.
-        const reservation = store.reserve(user, limitFor(user), {dailyReads:config.dailyReads, dailyBudgetMicroUsd:config.dailyBudgetUsd * 1e6});
+        const reservation = store.reserve(user, limitFor(user), {dailyReads:config.dailyReads, dailyBudgetMicroUsd:config.dailyBudgetUsd * 1e6, monthlyBudgetMicroUsd:config.monthlyBudgetUsd * 1e6});
         if (!reservation.ok) return send(429, {error:reservation.error, usage:usageView(user, reservation.used)});
         let upstream;
         try {

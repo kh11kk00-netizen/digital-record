@@ -37,6 +37,8 @@ export function loadConfig(env) {
     plans,
     dailyReads: positiveInt(env.OCR_DAILY_READS, 300, 'OCR_DAILY_READS'),
     dailyBudgetUsd: positiveNumber(env.OCR_DAILY_BUDGET_USD, 1, 'OCR_DAILY_BUDGET_USD'),
+    // Hard ceiling on estimated Gemini spend per calendar month (UTC), across all users.
+    monthlyBudgetUsd: positiveNumber(env.OCR_MONTHLY_BUDGET_USD, 5, 'OCR_MONTHLY_BUDGET_USD'),
     dailyRegistrations: positiveInt(env.OCR_DAILY_REGISTRATIONS, 100, 'OCR_DAILY_REGISTRATIONS'),
     registrationsPerIpPerHour: positiveInt(env.OCR_REGISTRATIONS_PER_IP_HOUR, 5, 'OCR_REGISTRATIONS_PER_IP_HOUR'),
     requestsPerUserPerMinute: positiveInt(env.OCR_REQUESTS_PER_USER_MINUTE, 4, 'OCR_REQUESTS_PER_USER_MINUTE'),

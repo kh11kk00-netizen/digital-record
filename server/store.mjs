@@ -32,6 +32,7 @@ export function openStore(path) {
     touch: db.prepare('UPDATE users SET last_used_at = ? WHERE id = ?'),
     usage: db.prepare('SELECT reads, refunds, input_tokens, output_tokens, cost_micro_usd FROM usage WHERE user_id = ? AND period = ?'),
     daily: db.prepare('SELECT reads, registrations, input_tokens, output_tokens, cost_micro_usd FROM daily WHERE day = ?'),
+    monthCost: db.prepare("SELECT COALESCE(SUM(cost_micro_usd), 0) AS cost FROM daily WHERE substr(day, 1, 7) = ?"),
     bumpRead: db.prepare(`INSERT INTO usage (user_id, period, reads) VALUES (?, ?, 1)
       ON CONFLICT (user_id, period) DO UPDATE SET reads = reads + 1`),
     bumpDailyRead: db.prepare(`INSERT INTO daily (day, reads) VALUES (?, 1) ON CONFLICT (day) DO UPDATE SET reads = reads + 1`),
@@ -55,6 +56,7 @@ export function openStore(path) {
   return {
     close: () => db.close(),
     month, day, usageOf, dailyOf,
+    monthCost: (period=month()) => q.monthCost.get(period).cost,
     /** Creates an anonymous reader identity. The secret is returned once and only its hash is kept. */
     register(maxPerDay) {
       return tx(() => {
@@ -82,6 +84,7 @@ export function openStore(path) {
         if (used >= limit) return {ok:false, error:'QUOTA_EXCEEDED', used};
         const d = dailyOf(today);
         if (d.reads >= caps.dailyReads || d.cost_micro_usd >= caps.dailyBudgetMicroUsd) return {ok:false, error:'DAILY_LIMIT', used};
+        if (q.monthCost.get(period).cost >= caps.monthlyBudgetMicroUsd) return {ok:false, error:'DAILY_LIMIT', used};
         q.bumpRead.run(user.id, period);
         q.bumpDailyRead.run(today);
         q.touch.run(new Date().toISOString(), user.id);

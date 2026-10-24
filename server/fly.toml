@@ -8,9 +8,12 @@ primary_region = "fra"
 
 [env]
   OCR_CLIENT_IP_HEADER = "fly-client-ip"
-  OCR_DAILY_READS = "300"
-  OCR_DAILY_BUDGET_USD = "1"
-  OCR_DAILY_REGISTRATIONS = "100"
+  # Pilot: 20 testers x 20 reads/month; spend ceilings in USD (1 USD = 3.75 SAR).
+  OCR_PLANS = '{"free":{"monthlyReads":20},"paid":{"monthlyReads":200}}'
+  OCR_DAILY_READS = "100"
+  OCR_DAILY_BUDGET_USD = "0.5"
+  OCR_MONTHLY_BUDGET_USD = "4"
+  OCR_DAILY_REGISTRATIONS = "30"
 
 [mounts]
   source = "reader_data"

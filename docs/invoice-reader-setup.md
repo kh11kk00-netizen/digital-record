@@ -17,6 +17,7 @@ The reader is a small Node 22.13+ service in `server/`. The Gemini key lives onl
 | `OCR_PLANS` | `{"free":{"monthlyReads":10},"paid":{"monthlyReads":200}}` | Reads per calendar month (UTC) per plan |
 | `OCR_DAILY_READS` | 300 | Global reads per UTC day |
 | `OCR_DAILY_BUDGET_USD` | 1 | Global estimated Gemini spend per UTC day; reads stop when reached |
+| `OCR_MONTHLY_BUDGET_USD` | 5 | Hard ceiling on estimated Gemini spend per UTC month, all users |
 | `OCR_DAILY_REGISTRATIONS` | 100 | New anonymous IDs per day |
 | `OCR_REGISTRATIONS_PER_IP_HOUR` | 5 | In-memory only; IPs are never written to disk |
 | `OCR_REQUESTS_PER_USER_MINUTE` | 4 | Per-user burst limit; one request in flight per user |

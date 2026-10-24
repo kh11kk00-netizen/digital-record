@@ -128,6 +128,15 @@ test('global daily budget stops reads once estimated cost reaches the cap', asyn
   });
 });
 
+test('monthly budget stops reads across days once the month ceiling is reached', async()=>{
+  await withReader({monthlyBudgetUsd:0.000001}, async()=>providerReply({title:'x'},{promptTokenCount:10,candidatesTokenCount:1}), async({start})=>{
+    const url=await start();
+    const a=await register(url), b=await register(url);
+    assert.equal((await post(url+'/v1/extract',{image:'/9j/'},a.token)).status,200);
+    assert.equal((await post(url+'/v1/extract',{image:'/9j/'},b.token)).status,429);
+  });
+});
+
 test('stored data contains no image, extracted text or token secret', async()=>{
   await withReader({}, async()=>providerReply({title:'Secret Product Name',merchant:'Private Shop'}), async({start,dir})=>{
     const url=await start();

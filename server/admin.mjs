@@ -18,6 +18,7 @@ try {
       }
       const today = store.dailyOf();
       console.log(`Today ${store.day()}: reads=${today.reads}/${config.dailyReads} registrations=${today.registrations}/${config.dailyRegistrations} cost=${usd(today.cost_micro_usd)}/$${config.dailyBudgetUsd}`);
+      console.log(`Month estimated cost: ${usd(store.monthCost(period))}/$${config.monthlyBudgetUsd}`);
       console.log('Top users:');
       for (const row of store.topUsers(period, 10)) console.log(`  ${row.user_id} reads=${row.reads} cost=${usd(row.cost_micro_usd)}`);
       break;
