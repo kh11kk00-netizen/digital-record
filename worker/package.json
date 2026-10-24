@@ -6,7 +6,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "migrate": "wrangler d1 migrations apply digital-record-reader --remote",
-    "admin": "node admin.mjs"
+    "admin": "node admin.mjs",
+    "bundle": "wrangler deploy --dry-run --outdir dist && mkdir -p dist-public && cp dist/index.js dist-public/worker.js && rm -rf dist"
   },
   "devDependencies": {
     "wrangler": "4.149.0"

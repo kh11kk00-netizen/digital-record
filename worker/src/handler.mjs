@@ -1,4 +1,5 @@
 import {schema, cleanExtraction, validateImage} from './extraction.mjs';
+import {TEST_PAGE_HTML, TEST_PAGE_JS} from './test-page.mjs';
 
 const MAX_BODY = 2_100_000;
 const TOKEN = /^dr1\.([\w-]{16})\.([\w-]{43})$/;
@@ -66,10 +67,18 @@ export function createHandler(config, {store, fetcher = (...args) => fetch(...ar
   return async function handle(request, clientIp = 'unknown') {
     const path = new URL(request.url).pathname;
     try {
-      if (path === '/health' && request.method === 'GET') return json(200, {ok:true});
+      if (path === '/health' && request.method === 'GET') return json(200, {ok:true, configured:!!config.key && (!!config.inviteCode || config.openRegistration)});
+      if (config.testPage && request.method === 'GET' && (path === '/test' || path === '/test.js')) {
+        const page = path === '/test';
+        return new Response(page ? TEST_PAGE_HTML : TEST_PAGE_JS, {headers:{
+          'Content-Type': page ? 'text/html; charset=utf-8' : 'text/javascript; charset=utf-8', 'Cache-Control':'no-store',
+          'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src blob: data:; connect-src 'self'; base-uri 'none'; form-action 'none'",
+          'X-Content-Type-Options':'nosniff', 'Referrer-Policy':'no-referrer'}});
+      }
 
       if (path === '/v1/register' && request.method === 'POST') {
         if (!registerLimiter(clientIp)) return json(429, {error:'TOO_MANY_REQUESTS'});
+        if (!config.inviteCode && !config.openRegistration) return json(503, {error:'NOT_CONFIGURED'});
         const body = await readBody(request);
         if (config.inviteCode && !sameText(typeof body.inviteCode === 'string' ? body.inviteCode.trim() : '', config.inviteCode)) return json(403, {error:'INVALID_INVITE'});
         const t = clock();

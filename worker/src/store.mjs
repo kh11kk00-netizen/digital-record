@@ -1,11 +1,19 @@
 // D1 storage. Each limit check is a single conditional SQL statement, so concurrent requests
 // across Worker isolates cannot exceed a limit.
+/** Same tables as migrations/0001_init.sql; created on first use so a dashboard-only deploy needs no SQL step. */
+export const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS users ( id TEXT PRIMARY KEY, secret_hash TEXT NOT NULL, plan TEXT NOT NULL DEFAULT 'free', monthly_limit INTEGER, disabled INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, last_used_at TEXT, rl_window INTEGER NOT NULL DEFAULT 0, rl_count INTEGER NOT NULL DEFAULT 0 )`,
+  `CREATE TABLE IF NOT EXISTS usage ( user_id TEXT NOT NULL, period TEXT NOT NULL, reads INTEGER NOT NULL DEFAULT 0, refunds INTEGER NOT NULL DEFAULT 0, input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0, cost_micro_usd INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, period) )`,
+  `CREATE TABLE IF NOT EXISTS daily ( day TEXT PRIMARY KEY, reads INTEGER NOT NULL DEFAULT 0, registrations INTEGER NOT NULL DEFAULT 0, input_tokens INTEGER NOT NULL DEFAULT 0, output_tokens INTEGER NOT NULL DEFAULT 0, cost_micro_usd INTEGER NOT NULL DEFAULT 0 )`,
+];
+
 const EMPTY_USAGE = {reads:0, refunds:0, input_tokens:0, output_tokens:0, cost_micro_usd:0};
 
 export function d1Store(db) {
   const one = (sql, ...args) => db.prepare(sql).bind(...args).first();
   const run = (sql, ...args) => db.prepare(sql).bind(...args).run();
   return {
+    ensureSchema: () => db.batch(SCHEMA.map((sql) => db.prepare(sql))),
     /** Counts a registration against the daily cap; returns false when the cap is reached. */
     async claimRegistration(day, maxPerDay) {
       if (maxPerDay < 1) return false;

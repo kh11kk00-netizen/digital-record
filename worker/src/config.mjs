@@ -9,8 +9,8 @@ const number = (raw, fallback, name) => {
   return value;
 };
 
-/** Default plans. Override with OCR_PLANS='{"free":{"monthlyReads":20},"paid":{"monthlyReads":200}}'. */
-export const DEFAULT_PLANS = {free:{monthlyReads:10}, paid:{monthlyReads:200}};
+/** Pilot defaults (20 invited testers). Override with OCR_PLANS='{"free":{"monthlyReads":10},"paid":{"monthlyReads":200}}'. */
+export const DEFAULT_PLANS = {free:{monthlyReads:20}, paid:{monthlyReads:200}};
 
 /** All limits come from Worker variables (wrangler.toml [vars]) and secrets, so they change without code edits. */
 export function loadConfig(env) {
@@ -25,15 +25,19 @@ export function loadConfig(env) {
   if (inviteCode && inviteCode.length < 12) throw Error('OCR_INVITE_CODE must be at least 12 characters');
   return {
     key: env.GEMINI_API_KEY?.trim() || '',
+    // Browser test page at /test for the pilot owner; set OCR_TEST_PAGE=0 to turn it off.
+    testPage: env.OCR_TEST_PAGE !== '0',
     model,
     inviteCode,
+    // Registration stays closed until OCR_INVITE_CODE is set, unless explicitly opened (after the pilot).
+    openRegistration: env.OCR_OPEN_REGISTRATION === '1',
     plans,
-    dailyReads: integer(env.OCR_DAILY_READS, 300, 'OCR_DAILY_READS'),
-    dailyBudgetUsd: number(env.OCR_DAILY_BUDGET_USD, 1, 'OCR_DAILY_BUDGET_USD'),
+    dailyReads: integer(env.OCR_DAILY_READS, 100, 'OCR_DAILY_READS'),
+    dailyBudgetUsd: number(env.OCR_DAILY_BUDGET_USD, 0.5, 'OCR_DAILY_BUDGET_USD'),
     // Ceiling on estimated Gemini spend per calendar month (UTC), across all users. On the free tier
     // nothing is billed; the estimate (at paid prices) still caps usage and informs future pricing.
-    monthlyBudgetUsd: number(env.OCR_MONTHLY_BUDGET_USD, 5, 'OCR_MONTHLY_BUDGET_USD'),
-    dailyRegistrations: integer(env.OCR_DAILY_REGISTRATIONS, 100, 'OCR_DAILY_REGISTRATIONS'),
+    monthlyBudgetUsd: number(env.OCR_MONTHLY_BUDGET_USD, 4, 'OCR_MONTHLY_BUDGET_USD'),
+    dailyRegistrations: integer(env.OCR_DAILY_REGISTRATIONS, 30, 'OCR_DAILY_REGISTRATIONS'),
     registrationsPerIpPerHour: integer(env.OCR_REGISTRATIONS_PER_IP_HOUR, 5, 'OCR_REGISTRATIONS_PER_IP_HOUR'),
     requestsPerUserPerMinute: integer(env.OCR_REQUESTS_PER_USER_MINUTE, 4, 'OCR_REQUESTS_PER_USER_MINUTE'),
     // USD per million tokens, used only to estimate cost. Check https://ai.google.dev/gemini-api/docs/pricing.

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHandler, costMicroUsd} from '../worker/src/handler.mjs';
-import {d1Store} from '../worker/src/store.mjs';
+import {d1Store, SCHEMA} from '../worker/src/store.mjs';
+import {readFileSync} from 'node:fs';
 import {loadConfig} from '../worker/src/config.mjs';
 import {cleanExtraction, validateImage} from '../worker/src/extraction.mjs';
 import {sqlFor} from '../worker/admin.mjs';
@@ -29,11 +30,19 @@ test('cost uses provider token counts and bills thinking tokens as output',()=>{
   assert.deepEqual(costMicroUsd(undefined,{inputUsdPerM:1,outputUsdPerM:1}),{inputTokens:0,outputTokens:0,costMicroUsd:0});
 });
 test('config validates plans and limits',()=>{
-  assert.equal(loadConfig({}).plans.free.monthlyReads,10);
+  assert.equal(loadConfig({}).plans.free.monthlyReads,20);
+  assert.equal(loadConfig({}).testPage,true);assert.equal(loadConfig({OCR_TEST_PAGE:'0'}).testPage,false);
   assert.equal(loadConfig({OCR_PLANS:'{"free":{"monthlyReads":3},"paid":{"monthlyReads":50}}'}).plans.paid.monthlyReads,50);
   assert.throws(()=>loadConfig({OCR_PLANS:'{"paid":{"monthlyReads":5}}'}),/free/);
   assert.throws(()=>loadConfig({OCR_DAILY_READS:'-1'}),/OCR_DAILY_READS/);
   assert.throws(()=>loadConfig({OCR_INVITE_CODE:'short'}),/12/);
+});
+test('built-in schema matches the migration and is idempotent', async()=>{
+  const migration=readFileSync(new URL('../worker/migrations/0001_init.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replace(/\s+/g,' ');
+  for (const statement of SCHEMA) assert.ok(migration.includes(statement),statement.slice(0,40));
+  const db=createD1();
+  await d1Store(db).ensureSchema();await d1Store(db).ensureSchema();
+  assert.equal(db.raw.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table'").get().n,3);
 });
 test('admin SQL only accepts validated identifiers, plans and limits',()=>{
   assert.match(sqlFor('set-limit',['abcdefghijklmnop','25'])[0],/monthly_limit = 25 WHERE id = 'abcdefghijklmnop'/);
@@ -45,7 +54,7 @@ test('admin SQL only accepts validated identifiers, plans and limits',()=>{
 const providerReply=(fields,usage={promptTokenCount:1400,candidatesTokenCount:100})=>new Response(JSON.stringify({usageMetadata:usage,candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(fields)}]}}]}));
 function setup(overrides={}, fetcher=async()=>providerReply({title:'x'})){
   const db=createD1();
-  const config={...loadConfig({GEMINI_API_KEY:'fake-provider-key'}),...overrides};
+  const config={...loadConfig({GEMINI_API_KEY:'fake-provider-key'}),openRegistration:true,...overrides};
   let clock=new Date('2026-10-24T10:00:00Z');
   const handle=createHandler(config,{store:d1Store(db),fetcher,now:()=>clock});
   const call=(path,{body,token,method='POST',headers={},ip='203.0.113.7'}={})=>handle(new Request('https://reader.test'+path,{method,headers:{...(body!==undefined?{'Content-Type':'application/json'}:{}),...(token?{Authorization:'Bearer '+token}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body)}),ip);
@@ -109,6 +118,19 @@ test('invite code gates registration; registrations are limited per IP and per d
   assert.equal((await open.register({inviteCode:' pilot-invite-code-1 '},'198.51.100.1')).status,201);
   assert.equal((await open.register({inviteCode:'pilot-invite-code-1'},'198.51.100.2')).status,201);
   assert.equal((await open.register({inviteCode:'pilot-invite-code-1'},'198.51.100.3')).status,429);
+});
+
+test('registration stays closed until an invite code is configured; test page is served with a strict CSP', async()=>{
+  const closed=setup({openRegistration:false});
+  assert.equal((await closed.register()).status,503);
+  const health=await(await closed.call('/health',{method:'GET'})).json();
+  assert.equal(health.configured,false);
+  const page=await closed.call('/test',{method:'GET'});
+  assert.equal(page.status,200);assert.match(page.headers.get('content-security-policy'),/script-src 'self'/);
+  assert.match(await page.text(),/فاتورة وهمية/);
+  assert.equal((await closed.call('/test.js',{method:'GET'})).status,200);
+  const off=setup({testPage:false});
+  assert.equal((await off.call('/test',{method:'GET'})).status,404);
 });
 
 test('per-user requests per minute are limited', async()=>{
