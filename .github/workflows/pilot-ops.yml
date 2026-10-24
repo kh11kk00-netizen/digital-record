@@ -1,0 +1,55 @@
+name: Pilot reader checks and EAS setup
+
+# Runs on GitHub's runners (open internet). Uses the existing EXPO_TOKEN secret and, when present,
+# the OCR_INVITE_CODE secret. Logs are public: never print tokens, keys, emails or credential contents.
+on:
+  push:
+    branches: [claude/friendly-goldberg-5108aq]
+    paths: ['.github/workflows/pilot-ops.yml', '.github/pilot-ops/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pilot-ops
+  cancel-in-progress: false
+
+env:
+  READER_URL: https://digital-record-reader.kh11kk00.workers.dev
+  EXPO_PROJECT_ID: 63c38093-fadf-45e6-bb05-f7bc5c2b1b94
+  BUNDLE_ID: com.kh11kk.digitalrecord
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Reader health
+        run: |
+          echo "health: $(curl -sS -m 20 "$READER_URL/health")"
+          echo "test page: $(curl -sS -m 20 -o /dev/null -w '%{http_code}' "$READER_URL/test")"
+          echo "root: $(curl -sS -m 20 "$READER_URL/")"
+
+      - name: Real Gemini reading of the fictional invoice
+        env:
+          OCR_INVITE_CODE: ${{ secrets.OCR_INVITE_CODE }}
+        run: node .github/pilot-ops/read-test.mjs
+
+      - name: Set reader URL in EAS preview environment
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then echo "::warning::EXPO_TOKEN secret is missing"; exit 0; fi
+          npx --yes eas-cli@24.12.0 env:set preview --name EXPO_PUBLIC_OCR_URL --value "$READER_URL" --visibility plaintext --scope project --non-interactive
+          npx --yes eas-cli@24.12.0 env:list preview --format short --non-interactive 2>/dev/null | grep -E '^EXPO_PUBLIC_' || true
+
+      - name: Store credentials and App Store Connect app ID (presence only)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: node .github/pilot-ops/store-info.mjs
